@@ -34,11 +34,19 @@ import {
   createEmployeeInNeon,
   setEmployeeStatusInNeon,
   getProjectsFromNeon,
+  createProjectInNeon,
+  updateProjectInNeon,
+  deleteProjectInNeon,
   getTasksFromNeon,
+  createTaskInNeon,
   updateTaskProgressInNeon,
+  deleteTaskInNeon,
   getProductsFromNeon,
+  createProductInNeon,
+  deleteProductInNeon,
   getServiceRequestsFromNeon,
   createServiceRequestInNeon,
+  deleteServiceRequestInNeon,
 } from '@/lib/actions/db';
 
 // ============================================================================
@@ -997,6 +1005,13 @@ class DataStore {
   }
 
   async deactivateClient(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      const client = this.clients.find((c) => c.id === id);
+      const nextStatus = client?.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await setClientStatusInNeon(id, nextStatus);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const client = this.clients.find((c) => c.id === id);
     if (!client) return false;
@@ -1008,13 +1023,19 @@ class DataStore {
   }
 
   async deleteClient(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteClientInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.clients.findIndex((c) => c.id === id);
-    if (index === -1) return false;
-    const client = this.clients[index];
-    this.clients.splice(index, 1);
-    this.addAuditLog(actorName, 'DELETED', 'CLIENT', id, { company: client.company_name });
-    this.syncToLocalStorage();
+    if (index !== -1) {
+      const client = this.clients[index];
+      this.clients.splice(index, 1);
+      this.addAuditLog(actorName, 'DELETED', 'CLIENT', id, { company: client.company_name });
+      this.syncToLocalStorage();
+    }
     return true;
   }
 
@@ -1224,6 +1245,16 @@ class DataStore {
   }
 
   async createProject(projectData: Omit<Project, 'id' | 'project_code' | 'created_at' | 'updated_at'>, actorName = 'Admin'): Promise<Project> {
+    try {
+      const neonCreated = await createProjectInNeon(projectData);
+      if (neonCreated) {
+        this.projects.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const count = this.projects.length + 1;
     const year = new Date().getFullYear();
@@ -1241,6 +1272,17 @@ class DataStore {
   }
 
   async updateProject(id: string, updates: Partial<Project>, actorName = 'Admin'): Promise<Project | null> {
+    try {
+      const neonUpdated = await updateProjectInNeon(id, updates);
+      if (neonUpdated) {
+        const idx = this.projects.findIndex((p) => p.id === id);
+        if (idx !== -1) this.projects[idx] = neonUpdated;
+        this.syncToLocalStorage();
+        return neonUpdated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.projects.findIndex((p) => p.id === id);
     if (index === -1) return null;
@@ -1255,6 +1297,11 @@ class DataStore {
   }
 
   async deleteProject(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteProjectInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.projects.findIndex((p) => p.id === id);
     if (index === -1) return false;
@@ -1298,6 +1345,16 @@ class DataStore {
   }
 
   async createTask(taskData: Omit<Task, 'id' | 'task_code' | 'created_at' | 'updated_at'>, actorName = 'Admin'): Promise<Task> {
+    try {
+      const neonCreated = await createTaskInNeon(taskData);
+      if (neonCreated) {
+        this.tasks.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const count = this.tasks.length + 1;
     const newTask: Task = {
@@ -1314,6 +1371,11 @@ class DataStore {
   }
 
   async deleteTask(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteTaskInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.tasks.findIndex((t) => t.id === id);
     if (index === -1) return false;
@@ -1380,6 +1442,16 @@ class DataStore {
   }
 
   async createProduct(productData: Omit<Product, 'id' | 'product_code' | 'created_at' | 'updated_at'>, actorName = 'Admin'): Promise<Product> {
+    try {
+      const neonCreated = await createProductInNeon(productData);
+      if (neonCreated) {
+        this.products.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const count = this.products.length + 1;
     const newProduct: Product = {
@@ -1410,12 +1482,33 @@ class DataStore {
   }
 
   async deleteProduct(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteProductInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.products.findIndex((p) => p.id === id);
     if (index === -1) return false;
     const prod = this.products[index];
     this.products.splice(index, 1);
     this.addAuditLog(actorName, 'DELETED', 'PRODUCT', id, { name: prod.name });
+    this.syncToLocalStorage();
+    return true;
+  }
+
+  async deleteServiceRequest(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteServiceRequestInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
+    this.loadFromLocalStorage();
+    const index = this.serviceRequests.findIndex((r) => r.id === id || r.request_id === id);
+    if (index === -1) return false;
+    const req = this.serviceRequests[index];
+    this.serviceRequests.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'SERVICE_REQUEST', id, { request_id: req.request_id });
     this.syncToLocalStorage();
     return true;
   }

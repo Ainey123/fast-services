@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { sql, isNeonConfigured } from '@/lib/db/neon';
 import {
@@ -376,9 +376,149 @@ export async function createServiceRequestInNeon(data: Omit<ServiceRequest, 'id'
       RETURNING *
     `;
 
-    return rows[0] as ServiceRequest;
+export async function createProjectInNeon(data: Omit<Project, 'id' | 'project_code' | 'created_at' | 'updated_at'>): Promise<Project | null> {
+  if (!isNeonConfigured) return null;
+  try {
+    const countRes = await sql`SELECT count(*)::int as cnt FROM public.projects`;
+    const count = (countRes[0]?.cnt || 0) + 1;
+    const year = new Date().getFullYear();
+    const projectCode = `PRJ-${year}-${count.toString().padStart(3, '0')}`;
+
+    const rows = await sql`
+      INSERT INTO public.projects (
+        project_code, name, client_id, service_id, description, priority, status, progress, start_date, expected_completion_date, actual_completion_date, notes
+      ) VALUES (
+        ${projectCode}, ${data.name}, ${data.client_id}, ${data.service_id || null}, ${data.description}, ${data.priority}, ${data.status || 'PLANNED'}, ${data.progress || 0}, ${data.start_date}, ${data.expected_completion_date}, ${data.actual_completion_date || null}, ${data.notes || null}
+      )
+      RETURNING *
+    `;
+    return rows[0] as Project;
   } catch (e) {
-    console.error('[Neon createServiceRequest Error]', e);
+    console.error('[Neon createProject Error]', e);
     return null;
   }
 }
+
+export async function updateProjectInNeon(id: string, updates: Partial<Project>): Promise<Project | null> {
+  if (!isNeonConfigured) return null;
+  try {
+    const rows = await sql`
+      UPDATE public.projects
+      SET name = COALESCE(${updates.name}, name),
+          description = COALESCE(${updates.description}, description),
+          priority = COALESCE(${updates.priority}, priority),
+          status = COALESCE(${updates.status}, status),
+          progress = COALESCE(${updates.progress}, progress),
+          expected_completion_date = COALESCE(${updates.expected_completion_date}, expected_completion_date),
+          notes = COALESCE(${updates.notes}, notes),
+          updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `;
+    return rows[0] as Project;
+  } catch (e) {
+    console.error('[Neon updateProject Error]', e);
+    return null;
+  }
+}
+
+export async function deleteProjectInNeon(id: string): Promise<boolean> {
+  if (!isNeonConfigured) return false;
+  try {
+    await sql`DELETE FROM public.projects WHERE id = ${id}`;
+    return true;
+  } catch (e) {
+    console.error('[Neon deleteProject Error]', e);
+    return false;
+  }
+}
+
+export async function createTaskInNeon(data: Omit<Task, 'id' | 'task_code' | 'created_at' | 'updated_at'>): Promise<Task | null> {
+  if (!isNeonConfigured) return null;
+  try {
+    const countRes = await sql`SELECT count(*)::int as cnt FROM public.tasks`;
+    const count = (countRes[0]?.cnt || 0) + 1;
+    const taskCode = `TSK-${count.toString().padStart(3, '0')}`;
+
+    const rows = await sql`
+      INSERT INTO public.tasks (
+        task_code, project_id, assigned_employee_id, title, description, status, progress, deadline
+      ) VALUES (
+        ${taskCode}, ${data.project_id}, ${data.assigned_employee_id || null}, ${data.title}, ${data.description || null}, ${data.status || 'PENDING'}, ${data.progress || 0}, ${data.deadline || null}
+      )
+      RETURNING *
+    `;
+    return rows[0] as Task;
+  } catch (e) {
+    console.error('[Neon createTask Error]', e);
+    return null;
+  }
+}
+
+export async function deleteTaskInNeon(id: string): Promise<boolean> {
+  if (!isNeonConfigured) return false;
+  try {
+    await sql`DELETE FROM public.tasks WHERE id = ${id}`;
+    return true;
+  } catch (e) {
+    console.error('[Neon deleteTask Error]', e);
+    return false;
+  }
+}
+
+export async function createProductInNeon(data: Omit<Product, 'id' | 'product_code' | 'created_at' | 'updated_at'>): Promise<Product | null> {
+  if (!isNeonConfigured) return null;
+  try {
+    const countRes = await sql`SELECT count(*)::int as cnt FROM public.products`;
+    const count = (countRes[0]?.cnt || 0) + 1;
+    const prodCode = `PRD-${count.toString().padStart(3, '0')}`;
+
+    const rows = await sql`
+      INSERT INTO public.products (
+        product_code, name, category, description, unit, price, stock, status
+      ) VALUES (
+        ${prodCode}, ${data.name}, ${data.category}, ${data.description || null}, ${data.unit}, ${data.price}, ${data.stock}, 'ACTIVE'
+      )
+      RETURNING *
+    `;
+    return rows[0] as Product;
+  } catch (e) {
+    console.error('[Neon createProduct Error]', e);
+    return null;
+  }
+}
+
+export async function deleteProductInNeon(id: string): Promise<boolean> {
+  if (!isNeonConfigured) return false;
+  try {
+    await sql`DELETE FROM public.products WHERE id = ${id}`;
+    return true;
+  } catch (e) {
+    console.error('[Neon deleteProduct Error]', e);
+    return false;
+  }
+}
+
+export async function deleteServiceRequestInNeon(id: string): Promise<boolean> {
+  if (!isNeonConfigured) return false;
+  try {
+    await sql`DELETE FROM public.service_requests WHERE id = ${id} OR request_id = ${id}`;
+    return true;
+  } catch (e) {
+    console.error('[Neon deleteServiceRequest Error]', e);
+    return false;
+  }
+}
+
+export async function deleteEmployeeInNeon(id: string): Promise<boolean> {
+  if (!isNeonConfigured) return false;
+  try {
+    await sql`DELETE FROM public.employees WHERE id = ${id}`;
+    await sql`DELETE FROM public.profiles WHERE id = ${id}`;
+    return true;
+  } catch (e) {
+    console.error('[Neon deleteEmployee Error]', e);
+    return false;
+  }
+}
+
