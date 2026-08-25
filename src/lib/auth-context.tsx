@@ -93,19 +93,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      const result = await loginUser(email, password);
+      // Use direct REST API — avoids Server Action caching/compilation issues on Vercel
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
       setIsLoading(false);
+
       if (result.success && result.user) {
         setUser(result.user);
         localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
         return { success: true };
       }
-      // Always return the EXACT error from the server — never mask it
+
+      // Show the EXACT error from the server — never mask it
       return { success: false, error: result.error || 'Login failed. Please try again.' };
     } catch (e: any) {
       setIsLoading(false);
-      // Surface the real server error to the user
-      return { success: false, error: e.message || 'Server error. Check database connection.' };
+      return { success: false, error: 'Network error: ' + (e.message || 'Could not reach server.') };
     }
   };
 
