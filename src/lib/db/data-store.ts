@@ -1497,21 +1497,6 @@ class DataStore {
     return true;
   }
 
-  async deleteServiceRequest(id: string, actorName = 'Admin'): Promise<boolean> {
-    try {
-      await deleteServiceRequestInNeon(id);
-    } catch (e) {
-      // Fallback
-    }
-    this.loadFromLocalStorage();
-    const index = this.serviceRequests.findIndex((r) => r.id === id || r.request_id === id);
-    if (index === -1) return false;
-    const req = this.serviceRequests[index];
-    this.serviceRequests.splice(index, 1);
-    this.addAuditLog(actorName, 'DELETED', 'SERVICE_REQUEST', id, { request_id: req.request_id });
-    this.syncToLocalStorage();
-    return true;
-  }
 
   async addProductUsage(data: { projectId: string; productId: string; quantity: number; actorName?: string; actorId?: string }): Promise<ProjectProduct | null> {
     this.loadFromLocalStorage();
@@ -1580,6 +1565,11 @@ class DataStore {
   }
 
   async deleteServiceRequest(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteServiceRequestInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.serviceRequests.findIndex((r) => r.id === id || r.request_id === id);
     if (index === -1) return false;

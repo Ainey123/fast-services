@@ -376,6 +376,13 @@ export async function createServiceRequestInNeon(data: Omit<ServiceRequest, 'id'
       RETURNING *
     `;
 
+    return rows[0] as ServiceRequest;
+  } catch (e) {
+    console.error('[Neon createServiceRequest Error]', e);
+    return null;
+  }
+}
+
 export async function createProjectInNeon(data: Omit<Project, 'id' | 'project_code' | 'created_at' | 'updated_at'>): Promise<Project | null> {
   if (!isNeonConfigured) return null;
   try {

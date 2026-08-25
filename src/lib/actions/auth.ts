@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import bcrypt from 'bcryptjs';
 import { sql, isNeonConfigured } from '@/lib/db/neon';
@@ -17,12 +17,12 @@ export async function loginUser(email: string, password?: string): Promise<{ suc
     }
 
     // Query profile from Neon
-    const rows = await sql`
+    const rows = (await sql`
       SELECT id, full_name, email, phone, password_hash, role, status, avatar_url, created_at, updated_at
       FROM public.profiles
       WHERE LOWER(email) = ${cleanEmail}
       LIMIT 1
-    `;
+    `) as any[];
 
     if (!rows || rows.length === 0) {
       return { success: false, error: 'Account not found with this email.' };
@@ -38,7 +38,7 @@ export async function loginUser(email: string, password?: string): Promise<{ suc
     if (userRow.password_hash && password) {
       const isValid = await bcrypt.compare(password, userRow.password_hash);
       if (!isValid) {
-        return { success: false, error: 'Invalid email or password.' };
+        return { success: false, error: 'Invalid password. Passwords are case-sensitive.' };
       }
     }
 
@@ -79,7 +79,7 @@ export async function registerUser(data: { full_name: string; email: string; pho
     }
 
     // Check if user already exists
-    const existing = await sql`SELECT id FROM public.profiles WHERE LOWER(email) = ${cleanEmail} LIMIT 1`;
+    const existing = (await sql`SELECT id FROM public.profiles WHERE LOWER(email) = ${cleanEmail} LIMIT 1`) as any[];
     if (existing && existing.length > 0) {
       return { success: false, error: 'An account with this email already exists.' };
     }
@@ -92,11 +92,11 @@ export async function registerUser(data: { full_name: string; email: string; pho
 
     const role = data.role || 'CUSTOMER';
 
-    const inserted = await sql`
+    const inserted = (await sql`
       INSERT INTO public.profiles (full_name, email, phone, password_hash, role, status)
       VALUES (${data.full_name}, ${cleanEmail}, ${data.phone}, ${passwordHash}, ${role}, 'ACTIVE')
       RETURNING id, full_name, email, phone, role, status, avatar_url, created_at, updated_at
-    `;
+    `) as any[];
 
     const userRow = inserted[0] as any;
     const profile: Profile = {
