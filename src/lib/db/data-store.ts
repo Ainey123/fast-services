@@ -18,8 +18,28 @@ import {
   UserStatus,
   UserRole,
 } from '@/types/database';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 import { generateId } from '@/lib/utils';
+import {
+  getCompanySettingsFromNeon,
+  updateCompanySettingsInNeon,
+  getServicesFromNeon,
+  createServiceInNeon,
+  updateServiceInNeon,
+  deleteServiceInNeon,
+  getClientsFromNeon,
+  createClientInNeon,
+  setClientStatusInNeon,
+  deleteClientInNeon,
+  getEmployeesFromNeon,
+  createEmployeeInNeon,
+  setEmployeeStatusInNeon,
+  getProjectsFromNeon,
+  getTasksFromNeon,
+  updateTaskProgressInNeon,
+  getProductsFromNeon,
+  getServiceRequestsFromNeon,
+  createServiceRequestInNeon,
+} from '@/lib/actions/db';
 
 // ============================================================================
 // INITIAL FAST ENGINEERING SOLUTIONS ENTERPRISE DATASET
@@ -790,11 +810,30 @@ class DataStore {
 
   // --- Company Settings ---
   async getCompanySettings(): Promise<CompanySettings> {
+    try {
+      const neonData = await getCompanySettingsFromNeon();
+      if (neonData) {
+        this.companySettings = neonData;
+        return { ...this.companySettings };
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     return { ...this.companySettings };
   }
 
   async updateCompanySettings(data: Partial<CompanySettings>, actorName = 'Admin'): Promise<CompanySettings> {
+    try {
+      const updated = await updateCompanySettingsInNeon(data, actorName);
+      if (updated) {
+        this.companySettings = updated;
+        this.syncToLocalStorage();
+        return { ...this.companySettings };
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     this.companySettings = {
       ...this.companySettings,
@@ -808,23 +847,40 @@ class DataStore {
 
   // --- Services ---
   async getServices(activeOnly = false): Promise<Service[]> {
+    try {
+      const neonServices = await getServicesFromNeon(activeOnly);
+      if (neonServices && neonServices.length > 0) {
+        this.services = neonServices;
+        return [...this.services];
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     return this.services.filter((s) => !activeOnly || s.is_active);
   }
 
   async getServiceBySlug(slug: string): Promise<Service | null> {
-    this.loadFromLocalStorage();
-    const service = this.services.find((s) => s.slug === slug);
-    return service ? { ...service } : null;
+    const list = await this.getServices();
+    return list.find((s) => s.slug === slug) || null;
   }
 
   async getServiceById(id: string): Promise<Service | null> {
-    this.loadFromLocalStorage();
-    const service = this.services.find((s) => s.id === id);
-    return service ? { ...service } : null;
+    const list = await this.getServices();
+    return list.find((s) => s.id === id) || null;
   }
 
   async createService(serviceData: Omit<Service, 'id' | 'created_at' | 'updated_at'>, actorName = 'Admin'): Promise<Service> {
+    try {
+      const neonCreated = await createServiceInNeon(serviceData);
+      if (neonCreated) {
+        this.services.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const newService: Service = {
       ...serviceData,
@@ -839,6 +895,17 @@ class DataStore {
   }
 
   async updateService(id: string, updates: Partial<Service>, actorName = 'Admin'): Promise<Service | null> {
+    try {
+      const neonUpdated = await updateServiceInNeon(id, updates);
+      if (neonUpdated) {
+        const idx = this.services.findIndex((s) => s.id === id);
+        if (idx !== -1) this.services[idx] = neonUpdated;
+        this.syncToLocalStorage();
+        return neonUpdated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const index = this.services.findIndex((s) => s.id === id);
     if (index === -1) return null;
@@ -853,30 +920,52 @@ class DataStore {
   }
 
   async deleteService(id: string, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await deleteServiceInNeon(id);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
-    const service = this.services.find((s) => s.id === id);
-    if (!service) return false;
-    // Safe toggle to inactive rather than breaking foreign references
-    service.is_active = false;
-    service.updated_at = new Date().toISOString();
-    this.addAuditLog(actorName, 'DEACTIVATED', 'SERVICE', id, { name: service.name });
+    const index = this.services.findIndex((s) => s.id === id);
+    if (index === -1) return false;
+    const service = this.services[index];
+    this.services.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'SERVICE', id, { name: service.name });
     this.syncToLocalStorage();
     return true;
   }
 
   // --- Clients ---
   async getClients(): Promise<Client[]> {
+    try {
+      const neonClients = await getClientsFromNeon();
+      if (neonClients && neonClients.length > 0) {
+        this.clients = neonClients;
+        return [...this.clients];
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     return [...this.clients];
   }
 
   async getClientById(id: string): Promise<Client | null> {
-    this.loadFromLocalStorage();
-    const client = this.clients.find((c) => c.id === id);
-    return client ? { ...client } : null;
+    const list = await this.getClients();
+    return list.find((c) => c.id === id) || null;
   }
 
   async createClient(clientData: Omit<Client, 'id' | 'client_code' | 'created_at' | 'updated_at'>, actorName = 'Admin'): Promise<Client> {
+    try {
+      const neonCreated = await createClientInNeon(clientData);
+      if (neonCreated) {
+        this.clients.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const count = this.clients.length + 1;
     const year = new Date().getFullYear();
@@ -931,25 +1020,43 @@ class DataStore {
 
   // --- Employees ---
   async getEmployees(): Promise<Employee[]> {
+    try {
+      const neonEmployees = await getEmployeesFromNeon();
+      if (neonEmployees && neonEmployees.length > 0) {
+        this.employees = neonEmployees;
+        return [...this.employees];
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     return [...this.employees];
   }
 
   async getEmployeeById(id: string): Promise<Employee | null> {
+    const list = await this.getEmployees();
+    return list.find((e) => e.id === id) || null;
+  }
+
+  async setEmployeeStatus(id: string, status: UserStatus, actorName = 'Admin'): Promise<boolean> {
+    try {
+      await setEmployeeStatusInNeon(id, status);
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const emp = this.employees.find((e) => e.id === id);
-    return emp ? { ...emp } : null;
+    if (!emp) return false;
+    emp.status = status;
+    if (emp.profile) emp.profile.status = status;
+    this.addAuditLog(actorName, `STATUS_${status}`, 'EMPLOYEE', id, { name: emp.profile?.full_name });
+    this.syncToLocalStorage();
+    return true;
   }
 
   async deleteEmployee(id: string, actorName = 'Admin'): Promise<boolean> {
-    this.loadFromLocalStorage();
-    const index = this.employees.findIndex((e) => e.id === id);
-    if (index === -1) return false;
-    const emp = this.employees[index];
-    this.employees.splice(index, 1);
-    this.addAuditLog(actorName, 'DELETED', 'EMPLOYEE', id, { name: emp.profile?.full_name });
-    this.syncToLocalStorage();
-    return true;
+    // Data Retention Rule: Soft archive instead of destructive deletion
+    return this.setEmployeeStatus(id, 'ARCHIVED', actorName);
   }
 
   async createEmployee(
@@ -961,9 +1068,20 @@ class DataStore {
       position: string;
       role: UserRole;
       joining_date?: string;
+      password?: string;
     },
     actorName = 'Admin'
   ): Promise<Employee> {
+    try {
+      const neonCreated = await createEmployeeInNeon(data);
+      if (neonCreated) {
+        this.employees.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const id = `emp-${Date.now().toString().slice(-4)}`;
     const empCount = this.employees.length + 1;
@@ -994,25 +1112,33 @@ class DataStore {
     };
 
     this.employees.push(newEmp);
-    this.addAuditLog(actorName, 'CREATED', 'EMPLOYEE', id, { code: employeeCode, name: data.full_name, role: data.role });
+    this.addAuditLog(actorName, 'CREATED', 'EMPLOYEE', newEmp.id, { name: profile.full_name, role: profile.role });
     this.syncToLocalStorage();
     return newEmp;
   }
 
-  async updateEmployee(id: string, updates: Partial<Employee & { full_name?: string; email?: string; phone?: string; role?: UserRole }>, actorName = 'Admin'): Promise<Employee | null> {
+  async updateEmployee(
+    id: string,
+    updates: {
+      department?: string;
+      position?: string;
+      full_name?: string;
+      phone?: string;
+      role?: UserRole;
+      status?: UserStatus;
+    },
+    actorName = 'Admin'
+  ): Promise<Employee | null> {
     this.loadFromLocalStorage();
-    const index = this.employees.findIndex((e) => e.id === id);
-    if (index === -1) return null;
-    
-    const emp = this.employees[index];
+    const emp = this.employees.find((e) => e.id === id);
+    if (!emp) return null;
+
     if (updates.department) emp.department = updates.department;
     if (updates.position) emp.position = updates.position;
     if (updates.status) emp.status = updates.status;
-    if (updates.joining_date) emp.joining_date = updates.joining_date;
 
     if (emp.profile) {
       if (updates.full_name) emp.profile.full_name = updates.full_name;
-      if (updates.email) emp.profile.email = updates.email;
       if (updates.phone) emp.profile.phone = updates.phone;
       if (updates.role) emp.profile.role = updates.role;
       if (updates.status) emp.profile.status = updates.status;
@@ -1029,12 +1155,8 @@ class DataStore {
     this.loadFromLocalStorage();
     const emp = this.employees.find((e) => e.id === id);
     if (!emp) return false;
-    emp.status = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    if (emp.profile) emp.profile.status = emp.status;
-    emp.updated_at = new Date().toISOString();
-    this.addAuditLog(actorName, emp.status === 'ACTIVE' ? 'ACTIVATED' : 'DEACTIVATED', 'EMPLOYEE', id, { name: emp.profile?.full_name });
-    this.syncToLocalStorage();
-    return true;
+    const nextStatus: UserStatus = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    return this.setEmployeeStatus(id, nextStatus, actorName);
   }
 
   async resetEmployeePassword(id: string, actorName = 'Admin'): Promise<{ success: boolean; message: string }> {
@@ -1054,51 +1176,45 @@ class DataStore {
   }
 
   // --- Projects ---
-  async getProjects(filters?: { month?: number; year?: number; status?: ProjectStatus; clientId?: string; employeeId?: string }): Promise<Project[]> {
+  async getProjects(filters?: { status?: ProjectStatus; clientId?: string; employeeId?: string; month?: number; year?: number }): Promise<Project[]> {
+    try {
+      const neonProjects = await getProjectsFromNeon();
+      if (neonProjects && neonProjects.length > 0) {
+        this.projects = neonProjects;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     let result = [...this.projects];
-
-    if (filters?.year) {
-      result = result.filter((p) => {
-        const start = new Date(p.start_date);
-        return start.getFullYear() === filters.year;
-      });
-    }
-
-    if (filters?.month !== undefined && filters?.month !== null && filters?.month >= 0) {
-      result = result.filter((p) => {
-        const start = new Date(p.start_date);
-        return start.getMonth() === filters.month;
-      });
-    }
 
     if (filters?.status) {
       result = result.filter((p) => p.status === filters.status);
     }
-
     if (filters?.clientId) {
       result = result.filter((p) => p.client_id === filters.clientId);
     }
-
     if (filters?.employeeId) {
       const taskProjectIds = this.tasks
         .filter((t) => t.assigned_employee_id === filters.employeeId)
         .map((t) => t.project_id);
       result = result.filter((p) => taskProjectIds.includes(p.id));
     }
+    if (filters?.month !== undefined && filters?.year !== undefined) {
+      result = result.filter((p) => {
+        const start = new Date(p.start_date);
+        const end = new Date(p.expected_completion_date);
+        const target = new Date(filters.year!, filters.month!, 15);
+        return target >= new Date(start.getFullYear(), start.getMonth(), 1) && target <= end;
+      });
+    }
 
-    // Attach hydrated relationships
     return result.map((p) => ({
       ...p,
       client: this.clients.find((c) => c.id === p.client_id),
       service: this.services.find((s) => s.id === p.service_id),
       tasks: this.tasks.filter((t) => t.project_id === p.id),
-      products_used: this.projectProducts
-        .filter((pp) => pp.project_id === p.id)
-        .map((pp) => ({
-          ...pp,
-          product: this.products.find((prod) => prod.id === pp.product_id),
-        })),
+      products_used: this.projectProducts.filter((pp) => pp.project_id === p.id),
     }));
   }
 
@@ -1153,6 +1269,14 @@ class DataStore {
 
   // --- Tasks ---
   async getTasks(filters?: { employeeId?: string; projectId?: string; status?: TaskStatus }): Promise<Task[]> {
+    try {
+      const neonTasks = await getTasksFromNeon();
+      if (neonTasks && neonTasks.length > 0) {
+        this.tasks = neonTasks;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     let result = [...this.tasks];
 
@@ -1201,6 +1325,17 @@ class DataStore {
   }
 
   async updateTaskProgress(id: string, progress: number, status: TaskStatus, actorName = 'Staff'): Promise<Task | null> {
+    try {
+      const neonUpdated = await updateTaskProgressInNeon(id, progress, status);
+      if (neonUpdated) {
+        const idx = this.tasks.findIndex((t) => t.id === id);
+        if (idx !== -1) this.tasks[idx] = neonUpdated;
+        this.syncToLocalStorage();
+        return neonUpdated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const task = this.tasks.find((t) => t.id === id);
     if (!task) return null;
@@ -1231,6 +1366,15 @@ class DataStore {
 
   // --- Products & Inventory ---
   async getProducts(): Promise<Product[]> {
+    try {
+      const neonProducts = await getProductsFromNeon();
+      if (neonProducts && neonProducts.length > 0) {
+        this.products = neonProducts;
+        return [...this.products];
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     return [...this.products];
   }
@@ -1310,6 +1454,14 @@ class DataStore {
 
   // --- Service Requests ---
   async getServiceRequests(filters?: { status?: RequestStatus; customerEmail?: string; clientId?: string }): Promise<ServiceRequest[]> {
+    try {
+      const neonRequests = await getServiceRequestsFromNeon();
+      if (neonRequests && neonRequests.length > 0) {
+        this.serviceRequests = neonRequests;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     let result = [...this.serviceRequests];
 
@@ -1350,6 +1502,16 @@ class DataStore {
       images?: { image_url: string; file_name?: string }[];
     }
   ): Promise<ServiceRequest> {
+    try {
+      const neonCreated = await createServiceRequestInNeon(data);
+      if (neonCreated) {
+        this.serviceRequests.unshift(neonCreated);
+        this.syncToLocalStorage();
+        return neonCreated;
+      }
+    } catch (e) {
+      // Fallback
+    }
     this.loadFromLocalStorage();
     const year = new Date().getFullYear();
     const seq = (this.serviceRequests.length + 101).toString().padStart(6, '0');

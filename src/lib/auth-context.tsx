@@ -2,21 +2,22 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Profile, UserRole } from '@/types/database';
+import { loginUser, registerUser, getCurrentSession, logoutUser } from '@/lib/actions/auth';
 import { db } from '@/lib/db/data-store';
 
 interface AuthContextType {
   user: Profile | null;
   role: UserRole | null;
   isLoading: boolean;
-  login: (email: string, role?: UserRole) => Promise<{ success: boolean; error?: string }>;
-  signup: (data: { full_name: string; email: string; phone: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password?: string, overrideRole?: UserRole) => Promise<{ success: boolean; error?: string }>;
+  signup: (data: { full_name: string; email: string; phone: string; password?: string }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default predefined test/demo profiles for different roles
+// Default fallback profiles for development/offline
 const DEMO_PROFILES: Record<UserRole, Profile> = {
   ADMIN: {
     id: 'emp-001',
@@ -65,30 +66,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check saved session on mount
-    try {
-      const savedUser = localStorage.getItem('fast_services_auth_user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+    // 1. First attempt to check active server session cookie
+    getCurrentSession().then((sessionUser) => {
+      if (sessionUser) {
+        setUser(sessionUser);
+        setIsLoading(false);
       } else {
-        // Default to guest/customer
-        setUser(DEMO_PROFILES.CUSTOMER);
+        // Fallback to local session storage
+        try {
+          const savedUser = localStorage.getItem('fast_services_auth_user');
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          } else {
+            setUser(DEMO_PROFILES.CUSTOMER);
+          }
+        } catch {
+          setUser(DEMO_PROFILES.CUSTOMER);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    } catch (e) {
-      console.warn('Auth init failed', e);
-      setUser(DEMO_PROFILES.CUSTOMER);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   }, []);
 
-  const login = async (email: string, overrideRole?: UserRole) => {
+  const login = async (email: string, password?: string, overrideRole?: UserRole) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400)); // Smooth UX transition
 
+    // 1. Attempt Neon Database Authentication
+    const result = await loginUser(email, password);
+    if (result.success && result.user) {
+      setUser(result.user);
+      localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
+      setIsLoading(false);
+      return { success: true };
+    }
+
+    // 2. Fallback in-memory matching if database is initializing or offline
     const lowerEmail = email.toLowerCase().trim();
-
-    // Match existing employees or customer
     let matchedProfile: Profile | null = null;
     const employees = await db.getEmployees();
     const emp = employees.find((e) => e.profile?.email.toLowerCase() === lowerEmail);
@@ -102,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else if (lowerEmail.includes('usman') || lowerEmail.includes('employee')) {
       matchedProfile = DEMO_PROFILES.EMPLOYEE;
     } else {
-      // Default customer profile with provided email
       matchedProfile = {
         id: `cust-${Date.now().toString().slice(-4)}`,
         full_name: email.split('@')[0].replace('.', ' ').toUpperCase(),
@@ -124,10 +137,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  const signup = async (data: { full_name: string; email: string; phone: string }) => {
+  const signup = async (data: { full_name: string; email: string; phone: string; password?: string }) => {
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
 
+    // 1. Attempt Neon Database Registration
+    const result = await registerUser(data);
+    if (result.success && result.user) {
+      setUser(result.user);
+      localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
+      setIsLoading(false);
+      return { success: true };
+    }
+
+    // 2. Fallback Profile Creation
     const newProfile: Profile = {
       id: `cust-${Date.now().toString().slice(-4)}`,
       full_name: data.full_name,
@@ -145,7 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await logoutUser();
     setUser(null);
     localStorage.removeItem('fast_services_auth_user');
   };
@@ -180,3 +203,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

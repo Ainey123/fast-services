@@ -1,19 +1,20 @@
--- ==============================================================================
+﻿-- ==============================================================================
 -- FAST SERVICES / FAST ENGINEERING SOLUTIONS
--- COMPLETE ENTERPRISE POSTGRESQL SCHEMA WITH RLS & TRIGGERS
+-- PRODUCTION NEON POSTGRESQL ENTERPRISE SCHEMA
 -- ==============================================================================
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ------------------------------------------------------------------------------
--- 1. PROFILES & USERS
+-- 1. PROFILES & USERS (Authentication & Role Registry)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     full_name TEXT NOT NULL,
     phone TEXT,
     email TEXT UNIQUE NOT NULL,
+    password_hash TEXT, -- Stored as bcrypt hash, never plaintext
     role TEXT NOT NULL CHECK (role IN ('ADMIN', 'MANAGER', 'EMPLOYEE', 'CUSTOMER')) DEFAULT 'CUSTOMER',
     status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'ARCHIVED')) DEFAULT 'ACTIVE',
     avatar_url TEXT,
@@ -22,10 +23,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 -- ------------------------------------------------------------------------------
--- 2. EMPLOYEES
+-- 2. EMPLOYEES (Linked to Profiles)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.employees (
-    id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE RESTRICT, -- Preserves employee records with historical ties
+    id UUID PRIMARY KEY REFERENCES public.profiles(id) ON DELETE RESTRICT,
     employee_code TEXT UNIQUE NOT NULL,
     department TEXT NOT NULL,
     position TEXT NOT NULL,
@@ -36,10 +37,10 @@ CREATE TABLE IF NOT EXISTS public.employees (
 );
 
 -- ------------------------------------------------------------------------------
--- 3. CLIENTS
+-- 3. CLIENTS (Corporate & Commercial Accounts)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.clients (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_code TEXT UNIQUE NOT NULL,
     company_name TEXT NOT NULL,
     contact_person TEXT NOT NULL,
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
     whatsapp TEXT,
     email TEXT,
     address TEXT NOT NULL,
-    location_coords JSONB, -- { "lat": 31.5204, "lng": 74.3587 }
+    location_coords JSONB, -- e.g. { "lat": 31.5204, "lng": 74.3587 }
     status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'ARCHIVED')) DEFAULT 'ACTIVE',
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
 -- 4. SERVICES CATALOGUE
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     category TEXT NOT NULL,
@@ -73,12 +74,12 @@ CREATE TABLE IF NOT EXISTS public.services (
 );
 
 -- ------------------------------------------------------------------------------
--- 5. SERVICE REQUESTS & SEQUENCE (FS-YYYY-XXXXXX)
+-- 5. SERVICE REQUESTS (Customer Submissions & Dispatch Pipeline)
 -- ------------------------------------------------------------------------------
 CREATE SEQUENCE IF NOT EXISTS service_request_seq START WITH 1001;
 
 CREATE TABLE IF NOT EXISTS public.service_requests (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id TEXT UNIQUE NOT NULL,
     user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     client_id UUID REFERENCES public.clients(id) ON DELETE SET NULL,
@@ -116,10 +117,10 @@ FOR EACH ROW
 EXECUTE FUNCTION generate_request_id();
 
 -- ------------------------------------------------------------------------------
--- 6. SERVICE REQUEST IMAGES
+-- 6. SERVICE REQUEST IMAGES (Private Site Inspection Photos)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.service_request_images (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id UUID NOT NULL REFERENCES public.service_requests(id) ON DELETE CASCADE,
     image_url TEXT NOT NULL,
     file_name TEXT,
@@ -130,7 +131,7 @@ CREATE TABLE IF NOT EXISTS public.service_request_images (
 -- 7. REQUEST STATUS HISTORY
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.request_status_history (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_id UUID NOT NULL REFERENCES public.service_requests(id) ON DELETE CASCADE,
     status TEXT NOT NULL,
     notes TEXT,
@@ -142,7 +143,7 @@ CREATE TABLE IF NOT EXISTS public.request_status_history (
 -- 8. PROJECTS
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.projects (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE RESTRICT,
@@ -163,9 +164,9 @@ CREATE TABLE IF NOT EXISTS public.projects (
 -- 9. PROJECT ASSIGNMENTS (Many-to-Many: Employees to Projects)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.project_assignments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-    employee_id UUID NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
+    employee_id UUID NOT NULL REFERENCES public.employees(id) ON DELETE RESTRICT,
     role_in_project TEXT DEFAULT 'Engineer',
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(project_id, employee_id)
@@ -175,7 +176,7 @@ CREATE TABLE IF NOT EXISTS public.project_assignments (
 -- 10. TASKS (Work Items assigned to Employees)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.tasks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     task_code TEXT UNIQUE NOT NULL,
     project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
     assigned_employee_id UUID REFERENCES public.employees(id) ON DELETE SET NULL,
@@ -192,7 +193,7 @@ CREATE TABLE IF NOT EXISTS public.tasks (
 -- 11. PRODUCTS & INVENTORY
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     product_code TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -200,17 +201,17 @@ CREATE TABLE IF NOT EXISTS public.products (
     unit TEXT NOT NULL DEFAULT 'units',
     price NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     stock NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
-    status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')) DEFAULT 'ACTIVE',
+    status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'ARCHIVED')) DEFAULT 'ACTIVE',
     image_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ------------------------------------------------------------------------------
--- 12. PROJECT PRODUCTS (Products Used in Projects)
+-- 12. PROJECT PRODUCTS (Products Consumed in Projects)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.project_products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE RESTRICT,
     quantity NUMERIC(12, 2) NOT NULL CHECK (quantity > 0),
@@ -225,8 +226,9 @@ CREATE TABLE IF NOT EXISTS public.project_products (
 -- 13. AUDIT LOGS
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.audit_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    actor_name TEXT,
     action TEXT NOT NULL,
     entity_type TEXT NOT NULL,
     entity_id TEXT NOT NULL,
@@ -238,163 +240,58 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 -- 14. COMPANY SETTINGS
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.company_settings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_name TEXT NOT NULL DEFAULT 'FAST ENGINEERING SOLUTIONS',
     app_name TEXT NOT NULL DEFAULT 'FAST SERVICES',
-    phone TEXT NOT NULL DEFAULT '+923001234567',
-    whatsapp TEXT NOT NULL DEFAULT '+923001234567',
-    email TEXT NOT NULL DEFAULT 'info@fastengineeringsolutions.com',
-    address TEXT NOT NULL DEFAULT 'Industrial Estate, Phase 2, Lahore, Pakistan',
+    description TEXT,
+    founded_year INTEGER DEFAULT 2012,
+    business_type TEXT DEFAULT 'General Contractor / Construction & Engineering Services',
+    phone TEXT NOT NULL DEFAULT '+92 300 4545280',
+    whatsapp TEXT NOT NULL DEFAULT '+923004545280',
+    email TEXT NOT NULL DEFAULT 'fastsales.services@gmail.com',
+    website TEXT DEFAULT 'fastengineeringsolutions.com',
+    address TEXT NOT NULL DEFAULT 'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan',
+    city TEXT DEFAULT 'Lahore',
+    province TEXT DEFAULT 'Punjab',
+    country TEXT DEFAULT 'Pakistan',
     latitude DOUBLE PRECISION DEFAULT 31.5204,
     longitude DOUBLE PRECISION DEFAULT 74.3587,
-    working_hours TEXT NOT NULL DEFAULT 'Monday - Saturday: 08:00 AM - 07:00 PM',
-    social_links JSONB NOT NULL DEFAULT '{"facebook": "#", "linkedin": "#", "twitter": "#"}'::jsonb,
+    working_hours TEXT NOT NULL DEFAULT '24 Hours Service (24/7 Construction & Engineering Support)',
+    social_links JSONB NOT NULL DEFAULT '{"pinterest": "https://www.pinterest.com/fastsalesservices/", "youtube": "https://www.youtube.com/@fastengineering8299", "tiktok": "https://www.tiktok.com/@fastengineeringsolution"}'::jsonb,
+    logo_url TEXT,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ------------------------------------------------------------------------------
--- 15. ROW LEVEL SECURITY (RLS) POLICIES
--- ------------------------------------------------------------------------------
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.service_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.service_request_images ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.request_status_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.project_assignments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.project_products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
-
--- Helper to check user role
-CREATE OR REPLACE FUNCTION public.current_user_role()
-RETURNS TEXT AS $$
-    SELECT role FROM public.profiles WHERE id = auth.uid();
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-
--- Services & Company Settings are public read for all
-CREATE POLICY "Public services read" ON public.services FOR SELECT USING (true);
-CREATE POLICY "Public company settings read" ON public.company_settings FOR SELECT USING (true);
-
--- Customers can view their own service requests and insert new ones
-CREATE POLICY "Customers view own requests" ON public.service_requests FOR SELECT USING (
-    auth.uid() = user_id OR public.current_user_role() IN ('ADMIN', 'MANAGER')
-);
-CREATE POLICY "Anyone or customer insert requests" ON public.service_requests FOR INSERT WITH CHECK (true);
-
--- Employees view assigned projects and tasks
-CREATE POLICY "Employee view assigned projects" ON public.projects FOR SELECT USING (
-    public.current_user_role() IN ('ADMIN', 'MANAGER') OR
-    EXISTS (SELECT 1 FROM public.project_assignments WHERE project_id = projects.id AND employee_id = auth.uid())
-);
-
-CREATE POLICY "Employee view assigned tasks" ON public.tasks FOR SELECT USING (
-    public.current_user_role() IN ('ADMIN', 'MANAGER') OR
-    assigned_employee_id = auth.uid()
-);
-
-CREATE POLICY "Employee update own task progress" ON public.tasks FOR UPDATE USING (
-    public.current_user_role() IN ('ADMIN', 'MANAGER') OR
-    assigned_employee_id = auth.uid()
-);
-
--- Admin & Manager full access policies
-CREATE POLICY "Admin manage all profiles" ON public.profiles FOR ALL USING (public.current_user_role() = 'ADMIN');
-CREATE POLICY "Admin manage all employees" ON public.employees FOR ALL USING (public.current_user_role() = 'ADMIN');
-CREATE POLICY "Admin manage all clients" ON public.clients FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all services" ON public.services FOR ALL USING (public.current_user_role() = 'ADMIN');
-CREATE POLICY "Admin manage all requests" ON public.service_requests FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all projects" ON public.projects FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all assignments" ON public.project_assignments FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all tasks" ON public.tasks FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all products" ON public.products FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all project_products" ON public.project_products FOR ALL USING (public.current_user_role() IN ('ADMIN', 'MANAGER'));
-CREATE POLICY "Admin manage all audit_logs" ON public.audit_logs FOR ALL USING (public.current_user_role() = 'ADMIN');
-CREATE POLICY "Admin manage company settings" ON public.company_settings FOR ALL USING (public.current_user_role() = 'ADMIN');
+-- Indexes for optimal lookup performance
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
+CREATE INDEX IF NOT EXISTS idx_services_slug ON public.services(slug);
+CREATE INDEX IF NOT EXISTS idx_service_requests_status ON public.service_requests(status);
+CREATE INDEX IF NOT EXISTS idx_projects_client_id ON public.projects(client_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON public.tasks(project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_employee_id ON public.tasks(assigned_employee_id);
+CREATE INDEX IF NOT EXISTS idx_project_products_project_id ON public.project_products(project_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
 
 -- ------------------------------------------------------------------------------
--- 16. SUPABASE STORAGE BUCKETS & STORAGE RLS POLICIES
+-- INITIAL OFFICIAL DATASET SEED
 -- ------------------------------------------------------------------------------
--- Bucket 1: fast-public-assets (Public bucket for catalog & marketing images)
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-    'fast-public-assets',
-    'fast-public-assets',
-    true,
-    5242880, -- 5MB limit
-    ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
-) ON CONFLICT (id) DO UPDATE SET
-    public = true,
-    file_size_limit = 5242880;
-
--- Bucket 2: fast-private-requests (STRICTLY PRIVATE bucket for customer site photos & inspections)
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-    'fast-private-requests',
-    'fast-private-requests',
-    false, -- Private bucket: access only via signed URLs
-    10485760, -- 10MB limit
-    ARRAY['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
-) ON CONFLICT (id) DO UPDATE SET
-    public = false,
-    file_size_limit = 10485760;
-
--- Storage RLS: fast-public-assets
-CREATE POLICY "Public read for fast-public-assets"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'fast-public-assets');
-
-CREATE POLICY "Admin & Manager upload to fast-public-assets"
-ON storage.objects FOR INSERT
-WITH CHECK (
-    bucket_id = 'fast-public-assets' AND
-    public.current_user_role() IN ('ADMIN', 'MANAGER')
-);
-
-CREATE POLICY "Admin & Manager delete from fast-public-assets"
-ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'fast-public-assets' AND
-    public.current_user_role() IN ('ADMIN', 'MANAGER')
-);
-
--- Storage RLS: fast-private-requests
-CREATE POLICY "Authorized access to fast-private-requests"
-ON storage.objects FOR SELECT
-USING (
-    bucket_id = 'fast-private-requests' AND (
-        public.current_user_role() IN ('ADMIN', 'MANAGER') OR
-        auth.uid() IS NOT NULL -- Signed URLs generated server-side or authenticated request owners
-    )
-);
-
-CREATE POLICY "Anyone or customers can upload request photos"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'fast-private-requests');
-
-CREATE POLICY "Admin only can delete request photos"
-ON storage.objects FOR DELETE
-USING (
-    bucket_id = 'fast-private-requests' AND
-    public.current_user_role() = 'ADMIN'
-);
-
--- ------------------------------------------------------------------------------
--- 17. INITIAL OFFICIAL COMPANY SETTINGS SEED
--- ------------------------------------------------------------------------------
-INSERT INTO public.company_settings (id, company_name, app_name, phone, whatsapp, email, address, working_hours, social_links)
-VALUES (
+INSERT INTO public.company_settings (
+    id, company_name, app_name, description, founded_year, business_type, phone, whatsapp, email, website, address, city, province, country, working_hours, social_links
+) VALUES (
     '00000000-0000-0000-0000-000000000001',
     'FAST ENGINEERING SOLUTIONS',
     'FAST SERVICES',
+    'Fast Engineering Solutions is a versatile general contractor founded in 2012, delivering end-to-end construction solutions throughout Pakistan.',
+    2012,
+    'General Contractor / Construction & Engineering Services',
     '+92 300 4545280',
     '+923004545280',
     'fastsales.services@gmail.com',
+    'fastengineeringsolutions.com',
     'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan',
+    'Lahore',
+    'Punjab',
+    'Pakistan',
     '24 Hours Service (24/7 Construction & Engineering Support)',
     '{"pinterest": "https://www.pinterest.com/fastsalesservices/", "youtube": "https://www.youtube.com/@fastengineering8299", "tiktok": "https://www.tiktok.com/@fastengineeringsolution"}'::jsonb
 ) ON CONFLICT (id) DO UPDATE SET

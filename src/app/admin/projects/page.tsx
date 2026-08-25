@@ -16,6 +16,7 @@ import {
   Users,
   X,
   TrendingUp,
+  Trash2,
 } from 'lucide-react';
 
 export default function AdminProjectsPage() {
@@ -240,7 +241,7 @@ export default function AdminProjectsPage() {
                   onClick={async () => {
                     if (window.confirm(`Are you sure you want to delete project "${proj.name}"?`)) {
                       await db.deleteProject(proj.id);
-                      await loadData();
+                      await loadAll();
                     }
                   }}
                   className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
