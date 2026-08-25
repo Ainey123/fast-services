@@ -1,12 +1,13 @@
-﻿import { neon, neonConfig, Pool } from '@neondatabase/serverless';
+import { neon, neonConfig, Pool } from '@neondatabase/serverless';
 
 // Configure WebSocket connection caching for Serverless environments if needed
 neonConfig.fetchConnectionCache = true;
 
 const connectionString =
+  process.env.FAST_SERVICES_DATABASE_URL ||
+  process.env.NEON_DATABASE_URL ||
   process.env.DATABASE_URL ||
   process.env.POSTGRES_URL ||
-  process.env.NEON_DATABASE_URL ||
   '';
 
 export const isNeonConfigured = Boolean(
