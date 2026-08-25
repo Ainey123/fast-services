@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const rawConn = getConnectionString();
   
-  let sourceVar = 'NONE';
+  let sourceVar = 'HARDCODED_FALLBACK';
   if (process.env.FAST_SERVICES_DATABASE_URL) sourceVar = 'FAST_SERVICES_DATABASE_URL';
   else if (process.env.NEON_DATABASE_URL) sourceVar = 'NEON_DATABASE_URL';
   else if (process.env.DATABASE_URL) sourceVar = 'DATABASE_URL';

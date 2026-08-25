@@ -92,24 +92,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password?: string, overrideRole?: UserRole) => {
     setIsLoading(true);
 
-    // 1. Neon Database Authentication
     try {
       const result = await loginUser(email, password);
+      setIsLoading(false);
       if (result.success && result.user) {
         setUser(result.user);
         localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
-        setIsLoading(false);
         return { success: true };
-      } else if (result.error) {
-        setIsLoading(false);
-        return { success: false, error: result.error };
       }
+      // Always return the EXACT error from the server — never mask it
+      return { success: false, error: result.error || 'Login failed. Please try again.' };
     } catch (e: any) {
-      console.warn('[Auth Login] Neon direct query warning:', e.message);
+      setIsLoading(false);
+      // Surface the real server error to the user
+      return { success: false, error: e.message || 'Server error. Check database connection.' };
     }
-
-    setIsLoading(false);
-    return { success: false, error: 'Invalid email or password. Please check your credentials.' };
   };
 
   const signup = async (data: { full_name: string; email: string; phone: string; password?: string }) => {

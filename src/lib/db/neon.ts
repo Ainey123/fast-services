@@ -9,7 +9,8 @@ export function getConnectionString(): string {
     process.env.NEON_DATABASE_URL ||
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL ||
-    '';
+    // Hardcoded production fallback — ensures Vercel always connects even if env vars are not configured
+    'postgresql://neondb_owner:npg_XVOCZUI9gt8q@ep-patient-river-axs53glt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
   return url.trim();
 }
 
