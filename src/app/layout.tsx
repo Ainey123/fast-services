@@ -4,8 +4,8 @@ import { AuthProvider } from '@/lib/auth-context';
 import { PwaProvider } from '@/components/pwa/PwaProvider';
 
 export const metadata: Metadata = {
-  title: 'FAST SERVICES | Fast Engineering Solutions',
-  description: 'Production-Ready Industrial & Commercial Engineering Service Platform. Fast Response, Reliable Engineering Solutions.',
+  title: 'FAST SERVICES | FAST ENGINEERING SOLUTIONS',
+  description: 'Fast Engineering Solutions is a versatile general contractor founded in 2012, delivering end-to-end construction solutions throughout Pakistan.',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',

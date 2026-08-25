@@ -38,8 +38,8 @@ export const Navbar: React.FC = () => {
     { name: 'Contact Us', href: '/contact' },
   ];
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm transition-all">
@@ -48,12 +48,12 @@ export const Navbar: React.FC = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <span className="font-medium text-slate-300">
-              FAST ENGINEERING SOLUTIONS — Industrial & Commercial Engineering
+              FAST ENGINEERING SOLUTIONS — General Contractor & Construction Solutions
             </span>
             <span className="text-slate-500">|</span>
             <span className="flex items-center gap-1.5 text-slate-400">
               <Calendar className="w-3.5 h-3.5 text-amber-400" />
-              {settings?.working_hours || 'Mon - Sat: 08:00 AM - 07:00 PM'}
+              {settings?.working_hours || '24/7 Service Available (24 Hours Emergency Support)'}
             </span>
           </div>
 

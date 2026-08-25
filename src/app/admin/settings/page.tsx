@@ -55,7 +55,7 @@ export default function AdminSettingsPage() {
       )}
 
       <form onSubmit={handleSave} className="bg-slate-950 rounded-3xl border border-slate-800 p-6 sm:p-8 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
               Company Legal Name
@@ -84,7 +84,32 @@ export default function AdminSettingsPage() {
 
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-              Official Hotline Phone (with Country Code)
+              Business Type
+            </label>
+            <input
+              type="text"
+              value={settings.business_type || ''}
+              onChange={(e) => setSettings({ ...settings, business_type: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="General Contractor / Construction & Engineering"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Founded Year
+            </label>
+            <input
+              type="number"
+              value={settings.founded_year || 2012}
+              onChange={(e) => setSettings({ ...settings, founded_year: parseInt(e.target.value) || 2012 })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Official Hotline Phone
             </label>
             <input
               type="text"
@@ -92,7 +117,7 @@ export default function AdminSettingsPage() {
               value={settings.phone}
               onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="+92 300 1234567"
+              placeholder="+92 300 4545280"
             />
           </div>
 
@@ -106,7 +131,7 @@ export default function AdminSettingsPage() {
               value={settings.whatsapp}
               onChange={(e) => setSettings({ ...settings, whatsapp: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="+923001234567"
+              placeholder="+923004545280"
             />
           </div>
 
@@ -120,6 +145,19 @@ export default function AdminSettingsPage() {
               value={settings.email}
               onChange={(e) => setSettings({ ...settings, email: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Official Website
+            </label>
+            <input
+              type="text"
+              value={settings.website || ''}
+              onChange={(e) => setSettings({ ...settings, website: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="fastengineeringsolutions.com"
             />
           </div>
 
@@ -139,15 +177,121 @@ export default function AdminSettingsPage() {
 
         <div>
           <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-            Head Office / Workshop Physical Address
+            Company Description / Overview
           </label>
-          <input
-            type="text"
-            required
-            value={settings.address}
-            onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+          <textarea
+            rows={3}
+            value={settings.description || ''}
+            onChange={(e) => setSettings({ ...settings, description: e.target.value })}
             className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Official company introduction..."
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Street Address
+            </label>
+            <input
+              type="text"
+              required
+              value={settings.address}
+              onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              City
+            </label>
+            <input
+              type="text"
+              value={settings.city || ''}
+              onChange={(e) => setSettings({ ...settings, city: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="Lahore"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+              Province & Country
+            </label>
+            <input
+              type="text"
+              value={`${settings.province || 'Punjab'}, ${settings.country || 'Pakistan'}`}
+              onChange={(e) => {
+                const parts = e.target.value.split(',');
+                setSettings({ ...settings, province: parts[0]?.trim(), country: parts[1]?.trim() || 'Pakistan' });
+              }}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              placeholder="Punjab, Pakistan"
+            />
+          </div>
+        </div>
+
+        {/* Social Media Links */}
+        <div className="border-t border-slate-800 pt-6">
+          <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider text-slate-300">
+            Official Social Media Links
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                Pinterest URL
+              </label>
+              <input
+                type="text"
+                value={settings.social_links?.pinterest || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    social_links: { ...settings.social_links, pinterest: e.target.value },
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="https://www.pinterest.com/fastsalesservices/"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                YouTube URL
+              </label>
+              <input
+                type="text"
+                value={settings.social_links?.youtube || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    social_links: { ...settings.social_links, youtube: e.target.value },
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="https://www.youtube.com/@fastengineering8299"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
+                TikTok URL
+              </label>
+              <input
+                type="text"
+                value={settings.social_links?.tiktok || ''}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    social_links: { ...settings.social_links, tiktok: e.target.value },
+                  })
+                }
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="https://www.tiktok.com/@fastengineeringsolution"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end pt-4 border-t border-slate-800">

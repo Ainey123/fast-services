@@ -13,8 +13,8 @@ export const MobileQuickBar: React.FC = () => {
     db.getCompanySettings().then(setSettings);
   }, []);
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
 
   return (
     <aside aria-label="Mobile quick actions" className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-3 py-2 text-white shadow-2xl safe-area-inset-bottom">

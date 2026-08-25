@@ -78,8 +78,8 @@ export default function CustomerRequestDetailPage() {
     );
   }
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
 
   const statusProgression = [
     'PENDING',

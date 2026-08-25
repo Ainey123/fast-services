@@ -25,9 +25,12 @@ export const Footer: React.FC = () => {
     db.getServices(true).then((srvs) => setServices(srvs.slice(0, 5)));
   }, []);
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
-  const companyEmail = settings?.email || 'info@fastengineeringsolutions.com';
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
+  const companyEmail = settings?.email || 'fastsales.services@gmail.com';
+  const companyDescription =
+    settings?.description ||
+    'Fast Engineering Solutions is a versatile general contractor founded in 2012, delivering end-to-end construction solutions throughout Pakistan.';
 
   return (
     <footer className="bg-slate-950 text-slate-300 border-t border-slate-800">
@@ -36,13 +39,13 @@ export const Footer: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" /> Certified Engineering Excellence
+              <ShieldCheck className="w-3.5 h-3.5" /> General Contractor & Construction Solutions
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-white">
-              Need Immediate Industrial or Commercial Support?
+              Need Immediate Engineering or Construction Support?
             </h3>
             <p className="text-sm text-slate-400 mt-1">
-              Our certified engineering dispatch units respond rapidly across Pakistan.
+              24/7 emergency dispatch and end-to-end construction solutions across Pakistan.
             </p>
           </div>
 
@@ -52,11 +55,11 @@ export const Footer: React.FC = () => {
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold shadow-lg shadow-blue-600/30 transition-all hover:scale-105"
             >
               <Phone className="w-4 h-4" />
-              <span>Call Now</span>
+              <span>Call: {cleanPhone}</span>
             </a>
             <a
               href={`https://wa.me/${cleanWhatsApp}?text=${encodeURIComponent(
-                'Hello Fast Services, I would like to inquire about an engineering service.'
+                'Hello Fast Services, I would like to inquire about your construction and engineering services.'
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -75,23 +78,42 @@ export const Footer: React.FC = () => {
         <div className="space-y-4">
           <Logo variant="white" size="lg" />
           <p className="text-sm text-slate-400 leading-relaxed">
-            FAST SERVICES is the dedicated service platform of{' '}
-            <strong className="text-slate-200">FAST ENGINEERING SOLUTIONS</strong>. We deliver high-reliability electrical, HVAC, solar, CCTV, and automation solutions.
+            {companyDescription}
           </p>
-          <div className="pt-2 flex items-center gap-3 text-xs text-slate-400">
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> PEC Registered
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> ISO Certified
-            </span>
+
+          {/* Official Social Links */}
+          <div className="pt-2 flex flex-wrap items-center gap-2 text-xs">
+            <a
+              href={settings?.social_links?.pinterest || 'https://www.pinterest.com/fastsalesservices/'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-rose-900/60 border border-slate-800 text-rose-400 font-bold transition-colors"
+            >
+              Pinterest
+            </a>
+            <a
+              href={settings?.social_links?.youtube || 'https://www.youtube.com/@fastengineering8299'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-red-900/60 border border-slate-800 text-red-400 font-bold transition-colors"
+            >
+              YouTube
+            </a>
+            <a
+              href={settings?.social_links?.tiktok || 'https://www.tiktok.com/@fastengineeringsolution'}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold transition-colors"
+            >
+              TikTok
+            </a>
           </div>
         </div>
 
         {/* Quick Service Links */}
         <div>
           <h4 className="text-white text-sm font-bold tracking-wider uppercase mb-4">
-            Core Engineering Services
+            Services & Solutions
           </h4>
           <ul className="space-y-2.5 text-sm">
             {services.map((s) => (
@@ -105,6 +127,11 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link href="/services" className="text-blue-400 hover:underline text-xs font-bold">
+                View All Services →
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -136,7 +163,7 @@ export const Footer: React.FC = () => {
             </li>
             <li>
               <Link href="/contact" className="text-slate-400 hover:text-white transition-colors">
-                Contact & Headquarters
+                Contact & Location
               </Link>
             </li>
           </ul>
@@ -150,7 +177,7 @@ export const Footer: React.FC = () => {
           <div className="space-y-3 text-sm text-slate-400">
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0 mt-1" />
-              <span>{settings?.address || 'Industrial Estate, Sector H-9, Islamabad / Lahore, Pakistan'}</span>
+              <span>{settings?.address || 'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan'}</span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -175,7 +202,7 @@ export const Footer: React.FC = () => {
 
             <div className="flex items-start gap-3">
               <Clock className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <span className="text-xs">{settings?.working_hours || 'Mon - Sat: 08:00 AM - 07:00 PM'}</span>
+              <span className="text-xs">{settings?.working_hours || '24 Hours Service (24/7 Available)'}</span>
             </div>
           </div>
         </div>
@@ -185,10 +212,10 @@ export const Footer: React.FC = () => {
       <div className="border-t border-slate-900 py-6 px-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            © {new Date().getFullYear()} <strong className="text-slate-400">FAST ENGINEERING SOLUTIONS</strong>. All rights reserved.
+            © {new Date().getFullYear()} <strong className="text-slate-400">FAST ENGINEERING SOLUTIONS</strong>. All rights reserved. (Operating Since 2012)
           </span>
           <span className="text-slate-400">
-            FAST SERVICES — Engineering & Industrial Support
+            FAST SERVICES — General Contractor & Construction Solutions
           </span>
         </div>
       </div>

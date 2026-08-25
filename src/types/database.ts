@@ -202,18 +202,30 @@ export interface CompanySettings {
   id: string;
   company_name: string;
   app_name: string;
+  description?: string;
+  founded_year?: number;
+  business_type?: string;
   phone: string;
   whatsapp: string;
   email: string;
+  website?: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  city?: string;
+  province?: string;
+  country?: string;
+  latitude?: number;
+  longitude?: number;
   working_hours: string;
   social_links: {
+    pinterest?: string;
+    youtube?: string;
+    tiktok?: string;
     facebook?: string;
     linkedin?: string;
     twitter?: string;
     instagram?: string;
+    [key: string]: string | undefined;
   };
+  logo_url?: string;
   updated_at: string;
 }

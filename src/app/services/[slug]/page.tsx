@@ -69,9 +69,9 @@ export default function ServiceDetailPage() {
     );
   }
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
-  const companyEmail = settings?.email || 'info@fastengineeringsolutions.com';
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
+  const companyEmail = settings?.email || 'fastsales.services@gmail.com';
 
   const emailSubject = `Service Inquiry - ${service.name}`;
   const emailBody = `Hello Fast Services,\n\nI would like to inquire about your ${service.name} service.\n\nThank you.`;

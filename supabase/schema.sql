@@ -317,14 +317,23 @@ CREATE POLICY "Admin manage all audit_logs" ON public.audit_logs FOR ALL USING (
 CREATE POLICY "Admin manage company settings" ON public.company_settings FOR ALL USING (public.current_user_role() = 'ADMIN');
 
 -- Insert initial company settings if none exist
-INSERT INTO public.company_settings (id, company_name, app_name, phone, whatsapp, email, address, working_hours)
+INSERT INTO public.company_settings (id, company_name, app_name, phone, whatsapp, email, address, working_hours, social_links)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
     'FAST ENGINEERING SOLUTIONS',
     'FAST SERVICES',
-    '+92 300 1234567',
-    '+923001234567',
-    'info@fastengineeringsolutions.com',
-    'Industrial Avenue, Sector H-9, Islamabad / Lahore, Pakistan',
-    'Mon - Sat: 8:00 AM - 7:00 PM (Emergency 24/7)'
-) ON CONFLICT (id) DO NOTHING;
+    '+92 300 4545280',
+    '+923004545280',
+    'fastsales.services@gmail.com',
+    'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan',
+    '24 Hours Service (24/7 Construction & Engineering Support)',
+    '{"pinterest": "https://www.pinterest.com/fastsalesservices/", "youtube": "https://www.youtube.com/@fastengineering8299", "tiktok": "https://www.tiktok.com/@fastengineeringsolution"}'::jsonb
+) ON CONFLICT (id) DO UPDATE SET
+    company_name = EXCLUDED.company_name,
+    app_name = EXCLUDED.app_name,
+    phone = EXCLUDED.phone,
+    whatsapp = EXCLUDED.whatsapp,
+    email = EXCLUDED.email,
+    address = EXCLUDED.address,
+    working_hours = EXCLUDED.working_hours,
+    social_links = EXCLUDED.social_links;

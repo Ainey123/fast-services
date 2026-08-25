@@ -43,9 +43,9 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  const cleanPhone = settings?.phone || '+923001234567';
-  const cleanWhatsApp = (settings?.whatsapp || '+923001234567').replace(/[^0-9]/g, '');
-  const companyEmail = settings?.email || 'info@fastengineeringsolutions.com';
+  const cleanPhone = settings?.phone || '+92 300 4545280';
+  const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
+  const companyEmail = settings?.email || 'fastsales.services@gmail.com';
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -66,7 +66,7 @@ export default function HomePage() {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>FAST ENGINEERING SOLUTIONS</span>
+                <span>FAST ENGINEERING SOLUTIONS — OPERATING SINCE 2012</span>
               </div>
 
               {/* Main Headline */}
@@ -74,11 +74,11 @@ export default function HomePage() {
                 FAST SERVICES
               </h1>
               <p className="mt-4 text-xl sm:text-2xl font-medium text-slate-300">
-                &ldquo;Professional Services. Fast Response. Reliable Solutions.&rdquo;
+                &ldquo;General Contractor & End-to-End Construction Solutions&rdquo;
               </p>
 
               <p className="mt-4 text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl">
-                Engineered for manufacturing industries, commercial facilities, and residential plazas. Certified electrical, HVAC, solar, CCTV surveillance, and automation engineering.
+                Founded in 2012, Fast Engineering Solutions operates as a versatile general contractor delivering end-to-end construction solutions throughout Pakistan.
               </p>
 
               {/* Strong CTAs */}
@@ -475,12 +475,12 @@ export default function HomePage() {
                     {settings?.company_name || 'FAST ENGINEERING SOLUTIONS'}
                   </h3>
                   <p className="text-sm text-slate-600 mt-2">
-                    {settings?.address || 'Industrial Estate, Sector H-9, Islamabad / Lahore, Pakistan'}
+                    {settings?.address || 'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan'}
                   </p>
 
                   <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-800">
                     <Clock className="w-3.5 h-3.5 inline mr-1 text-blue-600" />
-                    <strong>Working Hours:</strong> {settings?.working_hours || 'Mon - Sat: 08:00 AM - 07:00 PM'}
+                    <strong>Working Hours:</strong> {settings?.working_hours || '24 Hours Service (24/7 Available)'}
                   </div>
                 </div>
 
@@ -489,11 +489,11 @@ export default function HomePage() {
                   <div className="z-10">
                     <MapPin className="w-8 h-8 text-rose-600 mx-auto animate-bounce" />
                     <div className="text-xs font-bold text-slate-800 mt-1">
-                      Lahore & Islamabad Operations
+                      Lahore Operations & Dispatch
                     </div>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        settings?.address || 'Lahore Pakistan'
+                        settings?.address || 'Al Jannat Main Road, LDA Avenue 1, Raiwind Road, Lahore, Pakistan'
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
