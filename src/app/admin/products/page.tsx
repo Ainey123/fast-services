@@ -171,6 +171,7 @@ export default function AdminProductsPage() {
                 <th className="py-4 px-6">Current Stock</th>
                 <th className="py-4 px-6">Inventory Value</th>
                 <th className="py-4 px-6">Status</th>
+                <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-850">
@@ -204,6 +205,22 @@ export default function AdminProductsPage() {
                     >
                       {p.status}
                     </span>
+                  </td>
+                  <td className="py-4 px-6 text-right">
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Permanently delete product "${p.name}"?`)) {
+                          await db.deleteProduct(p.id);
+                          await loadAll();
+                          setFeedback(`Product "${p.name}" deleted.`);
+                          setTimeout(() => setFeedback(null), 3000);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
+                      title="Delete Product"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}

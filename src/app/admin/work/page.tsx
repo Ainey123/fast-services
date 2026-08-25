@@ -238,6 +238,21 @@ export default function AdminWorkPage() {
                   <td className="py-4 px-6 text-slate-400 font-mono">
                     {formatDate(task.deadline)}
                   </td>
+
+                  <td className="py-4 px-6 text-right">
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Delete task "${task.title}"?`)) {
+                          await db.deleteTask(task.id);
+                          await loadAll();
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
+                      title="Delete Task"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

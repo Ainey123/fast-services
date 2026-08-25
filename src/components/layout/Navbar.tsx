@@ -19,6 +19,7 @@ import {
   Calendar,
   LogOut,
   ChevronRight,
+  Download,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -26,6 +27,26 @@ export const Navbar: React.FC = () => {
   const { user, role, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<CompanySettings | null>(null);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handlePrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handlePrompt);
+  }, []);
+
+  const triggerInstall = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') setInstallPrompt(null);
+    } else {
+      alert('To install Fast Services:\n• On Chrome / Edge / Android: Click the Install icon in the browser address bar or menu.\n• On iOS Safari: Tap Share and select "Add to Home Screen".');
+    }
+  };
 
   useEffect(() => {
     db.getCompanySettings().then(setSettings);
@@ -106,11 +127,21 @@ export const Navbar: React.FC = () => {
         </nav>
 
         {/* Action Controls & Auth State */}
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="hidden sm:flex items-center gap-2 lg:gap-3">
+          {/* PWA Install Button */}
+          <button
+            onClick={triggerInstall}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 transition-all"
+            title="Install Fast Services App"
+          >
+            <Download className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden md:inline">Install App</span>
+          </button>
+
           {/* Quick Call Button */}
           <a
             href={`tel:${cleanPhone.replace(/\s+/g, '')}`}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold transition-all"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs lg:text-sm font-semibold transition-all"
             title="Call Engineering Support"
           >
             <Phone className="w-4 h-4 text-blue-600" />
@@ -275,6 +306,18 @@ export const Navbar: React.FC = () => {
                 </Link>
               </div>
             )}
+
+            {/* Mobile PWA Install Button */}
+            <button
+              onClick={() => {
+                triggerInstall();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30 text-xs font-bold transition-colors"
+            >
+              <Download className="w-4 h-4 text-amber-600" />
+              <span>Install Fast Services (PWA App)</span>
+            </button>
           </div>
         </div>
       )}

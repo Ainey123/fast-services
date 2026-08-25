@@ -232,9 +232,23 @@ export default function AdminProjectsPage() {
                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
                 Target: {formatDate(proj.expected_completion_date)}
               </span>
-              <span className="text-slate-500 text-[10px]">
-                {proj.tasks?.length || 0} Sub-Tasks Linked
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500 text-[10px]">
+                  {proj.tasks?.length || 0} Sub-Tasks
+                </span>
+                <button
+                  onClick={async () => {
+                    if (window.confirm(`Are you sure you want to delete project "${proj.name}"?`)) {
+                      await db.deleteProject(proj.id);
+                      await loadData();
+                    }
+                  }}
+                  className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
+                  title="Delete Project"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}

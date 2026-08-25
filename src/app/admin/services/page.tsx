@@ -118,6 +118,13 @@ export default function AdminServicesPage() {
     await loadServices();
   };
 
+  const handleDeleteService = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to permanently delete "${name}"?`)) {
+      await db.deleteService(id, 'Admin');
+      await loadServices();
+    }
+  };
+
   const filteredServices = services.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -201,21 +208,32 @@ export default function AdminServicesPage() {
                 )}
               </div>
 
-              <div className="pt-4 border-t border-slate-900 flex items-center justify-between">
+              <div className="pt-4 border-t border-slate-900 flex items-center justify-between gap-2">
                 <button
                   onClick={() => handleOpenEdit(service)}
                   className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-800"
                 >
                   <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Edit Scope</span>
+                  <span>Edit</span>
                 </button>
 
-                <button
-                  onClick={() => handleToggleActive(service.id, service.is_active)}
-                  className="text-xs font-bold text-slate-400 hover:text-white"
-                >
-                  {service.is_active ? 'Disable' : 'Enable'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleToggleActive(service.id, service.is_active)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-400 hover:text-white border border-slate-800"
+                  >
+                    {service.is_active ? 'Disable' : 'Enable'}
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteService(service.id, service.name)}
+                    className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
+                    title="Delete Service"
+                    aria-label="Delete Service"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

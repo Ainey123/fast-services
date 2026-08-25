@@ -369,14 +369,30 @@ export default function AdminRequestsPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleSaveStatus}
-                  disabled={saving}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{saving ? 'Synchronizing...' : 'Save & Publish Status Update'}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveStatus}
+                    disabled={saving}
+                    className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>{saving ? 'Synchronizing...' : 'Save & Publish Status Update'}</span>
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Permanently delete ticket ${selectedRequest.request_id}?`)) {
+                        await db.deleteServiceRequest(selectedRequest.id);
+                        setSelectedRequest(null);
+                        await loadRequests();
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 text-xs font-bold transition-all"
+                    title="Delete Request"
+                  >
+                    Delete Ticket
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

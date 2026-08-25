@@ -918,6 +918,17 @@ class DataStore {
     return true;
   }
 
+  async deleteClient(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.clients.findIndex((c) => c.id === id);
+    if (index === -1) return false;
+    const client = this.clients[index];
+    this.clients.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'CLIENT', id, { company: client.company_name });
+    this.syncToLocalStorage();
+    return true;
+  }
+
   // --- Employees ---
   async getEmployees(): Promise<Employee[]> {
     this.loadFromLocalStorage();
@@ -928,6 +939,17 @@ class DataStore {
     this.loadFromLocalStorage();
     const emp = this.employees.find((e) => e.id === id);
     return emp ? { ...emp } : null;
+  }
+
+  async deleteEmployee(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.employees.findIndex((e) => e.id === id);
+    if (index === -1) return false;
+    const emp = this.employees[index];
+    this.employees.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'EMPLOYEE', id, { name: emp.profile?.full_name });
+    this.syncToLocalStorage();
+    return true;
   }
 
   async createEmployee(
@@ -1116,6 +1138,19 @@ class DataStore {
     return this.projects[index];
   }
 
+  async deleteProject(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.projects.findIndex((p) => p.id === id);
+    if (index === -1) return false;
+    const proj = this.projects[index];
+    this.projects.splice(index, 1);
+    this.tasks = this.tasks.filter((t) => t.project_id !== id);
+    this.projectProducts = this.projectProducts.filter((pp) => pp.project_id !== id);
+    this.addAuditLog(actorName, 'DELETED', 'PROJECT', id, { name: proj.name });
+    this.syncToLocalStorage();
+    return true;
+  }
+
   // --- Tasks ---
   async getTasks(filters?: { employeeId?: string; projectId?: string; status?: TaskStatus }): Promise<Task[]> {
     this.loadFromLocalStorage();
@@ -1152,6 +1187,17 @@ class DataStore {
     this.addAuditLog(actorName, 'CREATED', 'TASK', newTask.id, { title: newTask.title, project_id: newTask.project_id });
     this.syncToLocalStorage();
     return newTask;
+  }
+
+  async deleteTask(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.tasks.findIndex((t) => t.id === id);
+    if (index === -1) return false;
+    const task = this.tasks[index];
+    this.tasks.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'TASK', id, { title: task.title });
+    this.syncToLocalStorage();
+    return true;
   }
 
   async updateTaskProgress(id: string, progress: number, status: TaskStatus, actorName = 'Staff'): Promise<Task | null> {
@@ -1219,6 +1265,17 @@ class DataStore {
     return this.products[index];
   }
 
+  async deleteProduct(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.products.findIndex((p) => p.id === id);
+    if (index === -1) return false;
+    const prod = this.products[index];
+    this.products.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'PRODUCT', id, { name: prod.name });
+    this.syncToLocalStorage();
+    return true;
+  }
+
   async addProductUsage(data: { projectId: string; productId: string; quantity: number; actorName?: string; actorId?: string }): Promise<ProjectProduct | null> {
     this.loadFromLocalStorage();
     const product = this.products.find((p) => p.id === data.productId);
@@ -1275,6 +1332,17 @@ class DataStore {
   async getServiceRequestById(id: string): Promise<ServiceRequest | null> {
     const list = await this.getServiceRequests();
     return list.find((r) => r.id === id || r.request_id === id) || null;
+  }
+
+  async deleteServiceRequest(id: string, actorName = 'Admin'): Promise<boolean> {
+    this.loadFromLocalStorage();
+    const index = this.serviceRequests.findIndex((r) => r.id === id || r.request_id === id);
+    if (index === -1) return false;
+    const req = this.serviceRequests[index];
+    this.serviceRequests.splice(index, 1);
+    this.addAuditLog(actorName, 'DELETED', 'SERVICE_REQUEST', id, { request_id: req.request_id });
+    this.syncToLocalStorage();
+    return true;
   }
 
   async createServiceRequest(

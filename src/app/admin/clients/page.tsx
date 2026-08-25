@@ -75,6 +75,13 @@ export default function AdminClientsPage() {
     await loadClients();
   };
 
+  const handleDeleteClient = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete client "${name}"?`)) {
+      await db.deleteClient(id);
+      await loadClients();
+    }
+  };
+
   const filteredClients = clients.filter(
     (c) =>
       c.company_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,14 +138,23 @@ export default function AdminClientsPage() {
                 <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
                   {client.client_code}
                 </span>
-                <button
-                  onClick={() => handleToggleStatus(client.id)}
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${getStatusBadgeClass(
-                    client.status
-                  )}`}
-                >
-                  {client.status} (Click to toggle)
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleToggleStatus(client.id)}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${getStatusBadgeClass(
+                      client.status
+                    )}`}
+                  >
+                    {client.status}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClient(client.id, client.company_name)}
+                    className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
+                    title="Delete Client"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <h2 className="text-base font-bold text-white mt-3">{client.company_name}</h2>

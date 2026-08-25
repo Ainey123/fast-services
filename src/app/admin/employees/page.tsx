@@ -246,6 +246,21 @@ export default function AdminEmployeesPage() {
                         </>
                       )}
                     </button>
+
+                    {/* Permanent Delete */}
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(`Permanently delete employee account for "${emp.profile?.full_name}"?`)) {
+                          await db.deleteEmployee(emp.id);
+                          await loadEmployees();
+                          setFeedback({ type: 'success', msg: `Employee "${emp.profile?.full_name}" removed successfully.` });
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
+                      title="Permanently Delete Employee"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}
