@@ -22,7 +22,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   
   const [email, setEmail] = useState('ahmed.raza@fastengineeringsolutions.com');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('Fast@2026');
   const [rememberMe, setRememberMe] = useState(true);
   const [selectedRole, setSelectedRole] = useState<UserRole>('ADMIN');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await login(email, selectedRole);
+      const res = await login(email, password, selectedRole);
       if (res.success) {
         if (selectedRole === 'ADMIN') {
           router.push('/admin');
@@ -44,7 +44,7 @@ export default function LoginPage() {
           router.push('/dashboard');
         }
       } else {
-        setError(res.error || 'Authentication failed.');
+        setError(res.error || 'Authentication failed. Please check your email and password.');
       }
     } catch (err: any) {
       setError('An unexpected error occurred. Please try again.');
@@ -57,7 +57,7 @@ export default function LoginPage() {
   const selectQuickAccount = (role: UserRole, accEmail: string) => {
     setSelectedRole(role);
     setEmail(accEmail);
-    setPassword('SecurePassword123!');
+    setPassword('Fast@2026');
   };
 
   return (
