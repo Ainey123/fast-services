@@ -66,22 +66,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 1. First attempt to check active server session cookie
+    // 1. Check active server session cookie
     getCurrentSession().then((sessionUser) => {
       if (sessionUser) {
         setUser(sessionUser);
+        localStorage.setItem('fast_services_auth_user', JSON.stringify(sessionUser));
         setIsLoading(false);
       } else {
-        // Fallback to local session storage
         try {
           const savedUser = localStorage.getItem('fast_services_auth_user');
           if (savedUser) {
             setUser(JSON.parse(savedUser));
           } else {
-            setUser(DEMO_PROFILES.CUSTOMER);
+            setUser(null);
           }
         } catch {
-          setUser(DEMO_PROFILES.CUSTOMER);
+          setUser(null);
         } finally {
           setIsLoading(false);
         }
@@ -92,85 +92,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password?: string, overrideRole?: UserRole) => {
     setIsLoading(true);
 
-    // 1. Attempt Neon Database Authentication
-    const result = await loginUser(email, password);
-    if (result.success && result.user) {
-      setUser(result.user);
-      localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
-      setIsLoading(false);
-      return { success: true };
+    // 1. Neon Database Authentication
+    try {
+      const result = await loginUser(email, password);
+      if (result.success && result.user) {
+        setUser(result.user);
+        localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
+        setIsLoading(false);
+        return { success: true };
+      } else if (result.error) {
+        setIsLoading(false);
+        return { success: false, error: result.error };
+      }
+    } catch (e: any) {
+      console.warn('[Auth Login] Neon direct query warning:', e.message);
     }
 
-    // 2. Fallback in-memory matching if database is initializing or offline
-    const lowerEmail = email.toLowerCase().trim();
-    let matchedProfile: Profile | null = null;
-    const employees = await db.getEmployees();
-    const emp = employees.find((e) => e.profile?.email.toLowerCase() === lowerEmail);
-
-    if (emp && emp.profile) {
-      matchedProfile = emp.profile;
-    } else if (lowerEmail.includes('admin')) {
-      matchedProfile = DEMO_PROFILES.ADMIN;
-    } else if (lowerEmail.includes('manager') || lowerEmail.includes('ali')) {
-      matchedProfile = DEMO_PROFILES.MANAGER;
-    } else if (lowerEmail.includes('usman') || lowerEmail.includes('employee')) {
-      matchedProfile = DEMO_PROFILES.EMPLOYEE;
-    } else {
-      matchedProfile = {
-        id: `cust-${Date.now().toString().slice(-4)}`,
-        full_name: email.split('@')[0].replace('.', ' ').toUpperCase(),
-        email: lowerEmail,
-        role: overrideRole || 'CUSTOMER',
-        status: 'ACTIVE',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-    }
-
-    if (overrideRole) {
-      matchedProfile.role = overrideRole;
-    }
-
-    setUser(matchedProfile);
-    localStorage.setItem('fast_services_auth_user', JSON.stringify(matchedProfile));
     setIsLoading(false);
-    return { success: true };
+    return { success: false, error: 'Invalid email or password. Please check your credentials.' };
   };
 
   const signup = async (data: { full_name: string; email: string; phone: string; password?: string }) => {
     setIsLoading(true);
 
-    // 1. Attempt Neon Database Registration
-    const result = await registerUser(data);
-    if (result.success && result.user) {
-      setUser(result.user);
-      localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
-      setIsLoading(false);
-      return { success: true };
+    // 1. Neon Database Registration
+    try {
+      const result = await registerUser(data);
+      if (result.success && result.user) {
+        setUser(result.user);
+        localStorage.setItem('fast_services_auth_user', JSON.stringify(result.user));
+        setIsLoading(false);
+        return { success: true };
+      } else if (result.error) {
+        setIsLoading(false);
+        return { success: false, error: result.error };
+      }
+    } catch (e: any) {
+      console.error('[Auth Signup Error]', e);
     }
 
-    // 2. Fallback Profile Creation
-    const newProfile: Profile = {
-      id: `cust-${Date.now().toString().slice(-4)}`,
-      full_name: data.full_name,
-      email: data.email.toLowerCase().trim(),
-      phone: data.phone,
-      role: 'CUSTOMER',
-      status: 'ACTIVE',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    setUser(newProfile);
-    localStorage.setItem('fast_services_auth_user', JSON.stringify(newProfile));
     setIsLoading(false);
-    return { success: true };
+    return { success: false, error: 'Registration failed. Please try again.' };
   };
 
   const logout = async () => {
-    await logoutUser();
+    try {
+      await logoutUser();
+    } catch (e) {
+      // ignore
+    }
     setUser(null);
-    localStorage.removeItem('fast_services_auth_user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('fast_services_auth_user');
+      window.location.href = '/auth/login';
+    }
   };
 
   const switchRole = (newRole: UserRole) => {
