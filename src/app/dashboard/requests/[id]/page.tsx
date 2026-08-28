@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServiceRequestById, getCompanySettings } from '@/lib/actions/db';
 import { ServiceRequest, CompanySettings } from '@/types/database';
 import { formatDate, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -36,14 +36,20 @@ export default function CustomerRequestDetailPage() {
   useEffect(() => {
     async function load() {
       if (!id) return;
-      const data = await db.getServiceRequestById(id);
-      const setts = await db.getCompanySettings();
-      setRequest(data);
-      setSettings(setts);
-      setLoading(false);
+      try {
+        const data = await getServiceRequestById(id);
+        const setts = await getCompanySettings().catch(() => null);
+        setRequest(data);
+        setSettings(setts);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, [id]);
+
 
   if (loading) {
     return (

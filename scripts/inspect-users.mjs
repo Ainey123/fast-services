@@ -1,7 +1,8 @@
-﻿import { neon } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
+import { getDbUrl } from './get-db-url.mjs';
 
-const connectionString = "postgresql://neondb_owner:npg_XVOCZUI9gt8q@ep-patient-river-axs53glt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require";
+const connectionString = getDbUrl();
 
 async function inspectProfiles() {
   const sql = neon(connectionString);

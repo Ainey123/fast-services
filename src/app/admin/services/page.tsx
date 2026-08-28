@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import {
+  getServices,
+  createService,
+  updateService,
+  deleteService,
+} from '@/lib/actions/db';
 import { Service } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -14,6 +19,8 @@ import {
   XCircle,
   X,
   Layers,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminServicesPage() {
@@ -21,6 +28,7 @@ export default function AdminServicesPage() {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Form fields
   const [name, setName] = useState('');
@@ -37,8 +45,14 @@ export default function AdminServicesPage() {
   }, []);
 
   const loadServices = async () => {
-    const list = await db.getServices(false);
-    setServices(list);
+    setError(null);
+    try {
+      const list = await getServices(false);
+      setServices(list);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load services from database.');
+    }
   };
 
   const handleOpenAdd = () => {
@@ -81,7 +95,7 @@ export default function AdminServicesPage() {
 
     try {
       if (editingService) {
-        await db.updateService(editingService.id, {
+        await updateService(editingService.id, {
           name,
           slug: slugVal,
           category,
@@ -92,7 +106,7 @@ export default function AdminServicesPage() {
           features: featuresArray,
         });
       } else {
-        await db.createService({
+        await createService({
           name,
           slug: slugVal,
           category,
@@ -106,24 +120,33 @@ export default function AdminServicesPage() {
       }
       setShowAddModal(false);
       await loadServices();
-    } catch (err) {
-      alert('Error saving service');
+    } catch (err: any) {
+      alert(err.message || 'Error saving service to database.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleToggleActive = async (id: string, current: boolean) => {
-    await db.updateService(id, { is_active: !current });
-    await loadServices();
+    try {
+      await updateService(id, { is_active: !current });
+      await loadServices();
+    } catch {
+      alert('Failed to update service status in database.');
+    }
   };
 
   const handleDeleteService = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to permanently delete "${name}"?`)) {
-      await db.deleteService(id, 'Admin');
-      await loadServices();
+      try {
+        await deleteService(id, 'Admin');
+        await loadServices();
+      } catch {
+        alert('Failed to delete service from database.');
+      }
     }
   };
+
 
   const filteredServices = services.filter(
     (s) =>
@@ -168,77 +191,109 @@ export default function AdminServicesPage() {
         />
       </div>
 
-      {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredServices.map((service) => (
-          <div
-            key={service.id}
-            className="bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
+      {error ? (
+        <div className="p-8 text-center bg-rose-950/40 rounded-3xl border border-rose-800 text-rose-300 space-y-3">
+          <p className="text-sm font-medium">{error}</p>
+          <button
+            onClick={loadServices}
+            className="px-4 py-2 bg-rose-600 text-white text-xs rounded-xl font-bold hover:bg-rose-700 transition-colors"
           >
-            <div className="h-44 w-full bg-slate-900 relative">
-              <img
-                src={service.image_url}
-                alt={service.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                {service.category}
-              </div>
-              <button
-                onClick={() => handleToggleActive(service.id, service.is_active)}
-                className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full shadow ${
-                  service.is_active ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-                }`}
-              >
-                {service.is_active ? 'ACTIVE' : 'DISABLED'}
-              </button>
-            </div>
-
-            <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
-              <div>
-                <h2 className="text-base font-bold text-white line-clamp-1">{service.name}</h2>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                  {service.short_description}
-                </p>
-
-                {service.price_starting_at && (
-                  <div className="mt-3 text-xs text-amber-400 font-mono font-bold">
-                    Est. Price: {formatCurrency(service.price_starting_at)}
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-4 border-t border-slate-900 flex items-center justify-between gap-2">
+            Retry
+          </button>
+        </div>
+      ) : filteredServices.length === 0 ? (
+        <div className="py-20 text-center bg-slate-950 rounded-3xl border border-slate-800 space-y-3">
+          <Layers className="w-10 h-10 text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-white">
+            {services.length === 0 ? 'No services have been added yet.' : 'No services match your search.'}
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            {services.length === 0
+              ? 'Click the "Add Service Offering" button above to publish your first service in the database.'
+              : 'Try searching with a different term.'}
+          </p>
+          {services.length === 0 && (
+            <button
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Service</span>
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredServices.map((service) => (
+            <div
+              key={service.id}
+              className="bg-slate-950 rounded-3xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
+            >
+              <div className="h-44 w-full bg-slate-900 relative">
+                <img
+                  src={service.image_url}
+                  alt={service.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 left-3 bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                  {service.category}
+                </div>
                 <button
-                  onClick={() => handleOpenEdit(service)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-800"
+                  onClick={() => handleToggleActive(service.id, service.is_active)}
+                  className={`absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full shadow ${
+                    service.is_active ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+                  }`}
                 >
-                  <Edit2 className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Edit</span>
+                  {service.is_active ? 'ACTIVE' : 'DISABLED'}
                 </button>
+              </div>
 
-                <div className="flex items-center gap-1.5">
+              <div className="p-6 space-y-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-white line-clamp-1">{service.name}</h2>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    {service.short_description}
+                  </p>
+
+                  {service.price_starting_at && (
+                    <div className="mt-3 text-xs text-amber-400 font-mono font-bold">
+                      Est. Price: {formatCurrency(service.price_starting_at)}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-slate-900 flex items-center justify-between gap-2">
                   <button
-                    onClick={() => handleToggleActive(service.id, service.is_active)}
-                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-400 hover:text-white border border-slate-800"
+                    onClick={() => handleOpenEdit(service)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-800"
                   >
-                    {service.is_active ? 'Disable' : 'Enable'}
+                    <Edit2 className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Edit</span>
                   </button>
 
-                  <button
-                    onClick={() => handleDeleteService(service.id, service.name)}
-                    className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
-                    title="Delete Service"
-                    aria-label="Delete Service"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleToggleActive(service.id, service.is_active)}
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-400 hover:text-white border border-slate-800"
+                    >
+                      {service.is_active ? 'Disable' : 'Enable'}
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteService(service.id, service.name)}
+                      className="p-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
+                      title="Delete Service"
+                      aria-label="Delete Service"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add / Edit Modal */}
       {showAddModal && (

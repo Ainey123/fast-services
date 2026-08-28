@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import {
+  getServiceRequests,
+  updateServiceRequestStatus,
+  deleteServiceRequest,
+} from '@/lib/actions/db';
 import { ServiceRequest, RequestStatus } from '@/types/database';
 import { formatDate, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -17,6 +21,9 @@ import {
   CheckCircle2,
   Calendar,
   Image as ImageIcon,
+  AlertCircle,
+  RefreshCw,
+  Trash2,
 } from 'lucide-react';
 
 export default function AdminRequestsPage() {
@@ -28,18 +35,25 @@ export default function AdminRequestsPage() {
   const [editNotes, setEditNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadRequests();
   }, []);
 
   const loadRequests = async () => {
-    const list = await db.getServiceRequests();
-    setRequests(list);
-    if (list.length > 0 && !selectedRequest) {
-      setSelectedRequest(list[0]);
-      setEditStatus(list[0].status);
-      setEditNotes(list[0].admin_notes || '');
+    setError(null);
+    try {
+      const list = await getServiceRequests();
+      setRequests(list);
+      if (list.length > 0 && !selectedRequest) {
+        setSelectedRequest(list[0]);
+        setEditStatus(list[0].status);
+        setEditNotes(list[0].admin_notes || '');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load service requests from database.');
     }
   };
 
@@ -53,21 +67,23 @@ export default function AdminRequestsPage() {
     if (!selectedRequest) return;
     setSaving(true);
     try {
-      await db.updateServiceRequestStatus(
+      await updateServiceRequestStatus(
         selectedRequest.id,
         editStatus,
         editNotes,
-        'Engr. Ahmed Raza (Admin)'
+        undefined,
+        'Admin'
       );
-      setSuccessMsg(`Status updated to ${editStatus} for ticket ${selectedRequest.request_id}. Customer dashboard updated.`);
+      setSuccessMsg(`Status updated to ${editStatus} for ticket ${selectedRequest.request_id} in Neon PostgreSQL.`);
       setTimeout(() => setSuccessMsg(null), 4000);
       await loadRequests();
-    } catch (e) {
-      alert('Error updating status');
+    } catch (e: any) {
+      alert(e.message || 'Error updating status in database.');
     } finally {
       setSaving(false);
     }
   };
+
 
   const filteredRequests = requests.filter((r) => {
     const matchesSearch =
@@ -132,45 +148,63 @@ export default function AdminRequestsPage() {
             ))}
           </div>
 
-          <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1">
-            {filteredRequests.map((req) => (
-              <div
-                key={req.id}
-                onClick={() => handleSelectRequest(req)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
-                  selectedRequest?.id === req.id
-                    ? 'bg-slate-900 border-blue-500 shadow-md ring-1 ring-blue-500/30'
-                    : 'bg-slate-950 border-slate-800/80 hover:bg-slate-900/60'
-                }`}
+          {error ? (
+            <div className="p-6 text-center bg-rose-950/40 rounded-2xl border border-rose-800 text-xs text-rose-300 space-y-2">
+              <p>{error}</p>
+              <button
+                onClick={loadRequests}
+                className="px-3 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-black text-amber-400">
-                    {req.request_id}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getStatusBadgeClass(
-                      req.status
-                    )}`}
-                  >
-                    {req.status}
-                  </span>
-                </div>
+                Retry
+              </button>
+            </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-500">
+              {requests.length === 0
+                ? 'No service requests found in database.'
+                : 'No requests match the search/filter criteria.'}
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1">
+              {filteredRequests.map((req) => (
+                <div
+                  key={req.id}
+                  onClick={() => handleSelectRequest(req)}
+                  className={`p-4 rounded-2xl border cursor-pointer transition-all space-y-2 ${
+                    selectedRequest?.id === req.id
+                      ? 'bg-slate-900 border-blue-500 shadow-md ring-1 ring-blue-500/30'
+                      : 'bg-slate-950 border-slate-800/80 hover:bg-slate-900/60'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-black text-amber-400">
+                      {req.request_id}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getStatusBadgeClass(
+                        req.status
+                      )}`}
+                    >
+                      {req.status}
+                    </span>
+                  </div>
 
-                <div className="font-bold text-white text-xs truncate">
-                  {req.customer_name}
-                </div>
+                  <div className="font-bold text-white text-xs truncate">
+                    {req.customer_name}
+                  </div>
 
-                <div className="text-[11px] text-slate-400 truncate">
-                  {req.service?.name}
-                </div>
+                  <div className="text-[11px] text-slate-400 truncate">
+                    {req.service?.name}
+                  </div>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-900">
-                  <span>Target: {formatDate(req.preferred_date)}</span>
-                  <span>{formatDate(req.created_at)}</span>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-900">
+                    <span>Target: {formatDate(req.preferred_date)}</span>
+                    <span>{formatDate(req.created_at)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column: Ticket Dossier & Status Controller */}
@@ -382,9 +416,13 @@ export default function AdminRequestsPage() {
                   <button
                     onClick={async () => {
                       if (window.confirm(`Permanently delete ticket ${selectedRequest.request_id}?`)) {
-                        await db.deleteServiceRequest(selectedRequest.id);
-                        setSelectedRequest(null);
-                        await loadRequests();
+                        try {
+                          await deleteServiceRequest(selectedRequest.id);
+                          setSelectedRequest(null);
+                          await loadRequests();
+                        } catch {
+                          alert('Failed to delete service request from database.');
+                        }
                       }
                     }}
                     className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 text-xs font-bold transition-all"
@@ -392,6 +430,7 @@ export default function AdminRequestsPage() {
                   >
                     Delete Ticket
                   </button>
+
                 </div>
               </div>
             </div>

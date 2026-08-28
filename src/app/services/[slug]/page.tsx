@@ -6,7 +6,7 @@ import { useParams, notFound } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServiceBySlug, getCompanySettings } from '@/lib/actions/db';
 import { Service, CompanySettings } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -32,14 +32,22 @@ export default function ServiceDetailPage() {
   useEffect(() => {
     async function loadData() {
       if (!slug) return;
-      const srv = await db.getServiceBySlug(slug);
-      const setts = await db.getCompanySettings();
-      setService(srv);
-      setSettings(setts);
-      setLoading(false);
+      try {
+        const [srv, setts] = await Promise.all([
+          getServiceBySlug(slug),
+          getCompanySettings().catch(() => null),
+        ]);
+        setService(srv);
+        setSettings(setts);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, [slug]);
+
 
   if (loading) {
     return (

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServices, createServiceRequest } from '@/lib/actions/db';
 import { Service, ServiceRequest } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
 import {
@@ -58,12 +58,13 @@ function ServiceRequestForm() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    db.getServices(true).then((srvs) => {
+    getServices(true).then((srvs) => {
       setServices(srvs);
       if (!selectedServiceId && srvs.length > 0) {
         setSelectedServiceId(srvs[0].id);
       }
-    });
+    }).catch(console.error);
+
 
     if (user) {
       if (!customerName) setCustomerName(user.full_name);
@@ -151,7 +152,7 @@ function ServiceRequestForm() {
 
     setIsSubmitting(true);
     try {
-      const created = await db.createServiceRequest({
+      const created = await createServiceRequest({
         service_id: selectedServiceId,
         user_id: user?.id,
         customer_name: customerName,
@@ -168,11 +169,12 @@ function ServiceRequestForm() {
 
       setSubmittedRequest(created);
     } catch (err: any) {
-      setFormError('Something went wrong submitting your request. Please try again or call our hotline.');
+      setFormError(err.message || 'Something went wrong submitting your request. Please try again or call our hotline.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">

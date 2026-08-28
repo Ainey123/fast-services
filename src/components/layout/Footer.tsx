@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import { db } from '@/lib/db/data-store';
+import { getCompanySettings, getServices } from '@/lib/actions/db';
 import { CompanySettings, Service } from '@/types/database';
 import {
   Phone,
@@ -21,9 +21,10 @@ export const Footer: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
 
   useEffect(() => {
-    db.getCompanySettings().then(setSettings);
-    db.getServices(true).then((srvs) => setServices(srvs.slice(0, 5)));
+    getCompanySettings().then(setSettings).catch(() => null);
+    getServices(true).then((srvs) => setServices(srvs.slice(0, 5))).catch(() => null);
   }, []);
+
 
   const cleanPhone = settings?.phone || '+92 300 4545280';
   const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');

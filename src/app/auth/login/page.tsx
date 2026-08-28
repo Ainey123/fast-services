@@ -5,26 +5,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
 import { useAuth } from '@/lib/auth-context';
-import { UserRole } from '@/types/database';
 import {
   Lock,
   Mail,
   ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
   AlertCircle,
-  Briefcase,
-  User,
 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  
-  const [email, setEmail] = useState('ahmed.raza@fastengineeringsolutions.com');
-  const [password, setPassword] = useState('Fast@2026');
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('ADMIN');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +28,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await login(email, password, selectedRole);
-      if (res.success) {
-        if (selectedRole === 'ADMIN') {
+      const res = await login(email, password);
+      if (res.success && res.user) {
+        if (res.user.role === 'ADMIN') {
           router.push('/admin');
-        } else if (selectedRole === 'MANAGER' || selectedRole === 'EMPLOYEE') {
+        } else if (res.user.role === 'MANAGER' || res.user.role === 'EMPLOYEE') {
           router.push('/employee');
         } else {
           router.push('/dashboard');
@@ -51,13 +45,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Quick Account Select helper for testing different roles
-  const selectQuickAccount = (role: UserRole, accEmail: string) => {
-    setSelectedRole(role);
-    setEmail(accEmail);
-    setPassword('Fast@2026');
   };
 
   return (
@@ -79,48 +66,6 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="bg-slate-900/90 backdrop-blur-xl py-8 px-6 sm:px-8 rounded-3xl border border-slate-800 shadow-2xl space-y-6">
-          {/* Quick Role Switcher for Rapid Verification */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Select Portal / Role
-            </label>
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
-              <button
-                type="button"
-                onClick={() => selectQuickAccount('ADMIN', 'ahmed.raza@fastengineeringsolutions.com')}
-                className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  selectedRole === 'ADMIN'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => selectQuickAccount('EMPLOYEE', 'usman.tariq@fastengineeringsolutions.com')}
-                className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  selectedRole === 'EMPLOYEE' || selectedRole === 'MANAGER'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Employee
-              </button>
-              <button
-                type="button"
-                onClick={() => selectQuickAccount('CUSTOMER', 'tariq@apextextiles.com.pk')}
-                className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                  selectedRole === 'CUSTOMER'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Customer
-              </button>
-            </div>
-          </div>
-
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -214,3 +159,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

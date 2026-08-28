@@ -1,24 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import { getAuditLogs } from '@/lib/actions/db';
 import { AuditLog } from '@/types/database';
 import { formatDate, formatDateTime } from '@/lib/utils';
-import { Activity, Search, ShieldCheck, Filter } from 'lucide-react';
+import { Activity, Search, ShieldCheck, Filter, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function AdminActivityPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [search, setSearch] = useState('');
   const [filterEntity, setFilterEntity] = useState('ALL');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadLogs();
   }, []);
 
   const loadLogs = async () => {
-    const data = await db.getAuditLogs();
-    setLogs(data);
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getAuditLogs();
+      setLogs(data);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load activity logs from database.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
@@ -43,8 +55,25 @@ export default function AdminActivityPage() {
         </p>
       </div>
 
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadLogs}
+            className="flex items-center gap-1.5 px-3 py-1 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-xs font-bold rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {/* Filter & Search */}
       <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row gap-3 items-center justify-between">
+
         <div className="flex items-center gap-3 w-full sm:max-w-md">
           <Search className="w-4 h-4 text-slate-500" />
           <input

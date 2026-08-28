@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServices, getCompanySettings } from '@/lib/actions/db';
 import { Service, CompanySettings } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -34,14 +34,22 @@ export default function HomePage() {
 
   useEffect(() => {
     async function loadData() {
-      const loadedServices = await db.getServices(true);
-      const loadedSettings = await db.getCompanySettings();
-      setServices(loadedServices);
-      setSettings(loadedSettings);
-      setLoading(false);
+      try {
+        const [loadedServices, loadedSettings] = await Promise.all([
+          getServices(true).catch(() => []),
+          getCompanySettings().catch(() => null),
+        ]);
+        setServices(loadedServices);
+        setSettings(loadedSettings);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
+
 
   const cleanPhone = settings?.phone || '+92 300 4545280';
   const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');
@@ -224,63 +232,75 @@ export default function HomePage() {
             </div>
 
             {/* Service Cards Grid */}
-            <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {services.map((service) => (
-                <div
-                  key={service.id}
-                  className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
-                >
-                  {/* Service Image */}
-                  <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
-                    <img
-                      src={service.image_url}
-                      alt={service.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full">
-                      {service.category}
+            {loading ? (
+              <div className="py-20 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-xs text-slate-500 mt-2">Loading services from database...</p>
+              </div>
+            ) : services.length === 0 ? (
+              <div className="py-16 text-center bg-white rounded-2xl border border-slate-200 mt-10">
+                <p className="text-slate-600 font-semibold text-lg">No services have been added yet.</p>
+                <p className="text-slate-400 text-sm mt-1">Please check back later or contact administration.</p>
+              </div>
+            ) : (
+              <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {services.map((service) => (
+                  <div
+                    key={service.id}
+                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
+                  >
+                    {/* Service Image */}
+                    <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+                      <img
+                        src={service.image_url}
+                        alt={service.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full">
+                        {service.category}
+                      </div>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-6 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
+                          {service.name}
+                        </h3>
+                        <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                          {service.short_description}
+                        </p>
+
+                        {service.price_starting_at && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                            <span>Starting from</span>
+                            <span className="text-sm font-bold text-slate-900">
+                              {formatCurrency(service.price_starting_at)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                        <Link
+                          href={`/services/${service.slug}`}
+                          className="inline-flex items-center justify-center px-3 py-2 rounded-xl border border-slate-300 hover:border-slate-400 text-slate-700 text-xs font-bold text-center transition-colors"
+                        >
+                          View Details
+                        </Link>
+                        <Link
+                          href={`/request?service=${service.id}`}
+                          className="inline-flex items-center justify-center px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold text-center shadow-sm transition-colors"
+                        >
+                          Request Service
+                        </Link>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Card Content */}
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors">
-                        {service.name}
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-600 line-clamp-3">
-                        {service.short_description}
-                      </p>
-
-                      {service.price_starting_at && (
-                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                          <span>Starting from</span>
-                          <span className="text-sm font-bold text-slate-900">
-                            {formatCurrency(service.price_starting_at)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
-                      <Link
-                        href={`/services/${service.slug}`}
-                        className="inline-flex items-center justify-center px-3 py-2 rounded-xl border border-slate-300 hover:border-slate-400 text-slate-700 text-xs font-bold text-center transition-colors"
-                      >
-                        View Details
-                      </Link>
-                      <Link
-                        href={`/request?service=${service.id}`}
-                        className="inline-flex items-center justify-center px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold text-center shadow-sm transition-colors"
-                      >
-                        Request Service
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-12 text-center">
               <Link

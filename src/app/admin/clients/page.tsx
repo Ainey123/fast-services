@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/db/data-store';
+import { getClients, createClient, setClientStatus, deleteClient } from '@/lib/actions/db';
 import { Client } from '@/types/database';
 import { formatDate, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -17,12 +17,15 @@ import {
   ShieldAlert,
   Building2,
   X,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [companyName, setCompanyName] = useState('');
@@ -38,15 +41,22 @@ export default function AdminClientsPage() {
   }, []);
 
   const loadClients = async () => {
-    const list = await db.getClients();
-    setClients(list);
+    setError(null);
+    try {
+      const list = await getClients();
+      setClients(list);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load clients from database.');
+    }
   };
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
-      await db.createClient({
+      await createClient({
         company_name: companyName,
         contact_person: contactPerson,
         phone,
@@ -63,24 +73,34 @@ export default function AdminClientsPage() {
       setAddress('');
       setNotes('');
       await loadClients();
-    } catch (err) {
-      alert('Failed to create client');
+    } catch (err: any) {
+      alert(err.message || 'Failed to create client in database.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleToggleStatus = async (id: string) => {
-    await db.deactivateClient(id);
-    await loadClients();
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      await setClientStatus(id, newStatus);
+      await loadClients();
+    } catch (err: any) {
+      alert('Failed to update client status in database.');
+    }
   };
 
   const handleDeleteClient = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete client "${name}"?`)) {
-      await db.deleteClient(id);
-      await loadClients();
+      try {
+        await deleteClient(id);
+        await loadClients();
+      } catch (err: any) {
+        alert('Failed to delete client from database.');
+      }
     }
   };
+
 
   const filteredClients = clients.filter(
     (c) =>
@@ -114,6 +134,22 @@ export default function AdminClientsPage() {
         </button>
       </div>
 
+      {error && (
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadClients}
+            className="flex items-center gap-1.5 px-3 py-1 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-xs font-bold rounded-lg transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {/* Search Bar */}
       <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center gap-3">
         <Search className="w-4 h-4 text-slate-500" />
@@ -140,13 +176,14 @@ export default function AdminClientsPage() {
                 </span>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleToggleStatus(client.id)}
+                    onClick={() => handleToggleStatus(client.id, client.status)}
                     className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${getStatusBadgeClass(
                       client.status
                     )}`}
                   >
                     {client.status}
                   </button>
+
                   <button
                     onClick={() => handleDeleteClient(client.id, client.company_name)}
                     className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"

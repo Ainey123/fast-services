@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import {
+  getProducts,
+  getProjects,
+  createProduct,
+  addProductUsage,
+  deleteProduct,
+} from '@/lib/actions/db';
 import { Product, Project } from '@/types/database';
 import { formatCurrency, formatDate, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -14,6 +20,8 @@ import {
   Layers,
   ArrowRight,
   TrendingDown,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminProductsPage() {
@@ -22,6 +30,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUsageModal, setShowUsageModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // New Product Form
   const [name, setName] = useState('');
@@ -43,19 +52,25 @@ export default function AdminProductsPage() {
   }, []);
 
   const loadAll = async () => {
-    const prds = await db.getProducts();
-    const prjs = await db.getProjects();
-    setProducts(prds);
-    setProjects(prjs);
-    if (prds.length > 0) setSelectedProductId(prds[0].id);
-    if (prjs.length > 0) setSelectedProjectId(prjs[0].id);
+    setError(null);
+    try {
+      const prds = await getProducts();
+      const prjs = await getProjects();
+      setProducts(prds);
+      setProjects(prjs);
+      if (prds.length > 0 && !selectedProductId) setSelectedProductId(prds[0].id);
+      if (prjs.length > 0 && !selectedProjectId) setSelectedProjectId(prjs[0].id);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load products from database.');
+    }
   };
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await db.createProduct({
+      await createProduct({
         name,
         category,
         description,
@@ -67,11 +82,11 @@ export default function AdminProductsPage() {
       setShowAddModal(false);
       setName('');
       setDescription('');
-      setFeedback('Product added to enterprise inventory.');
+      setFeedback('Product added to enterprise inventory in Neon PostgreSQL.');
       setTimeout(() => setFeedback(null), 4000);
       await loadAll();
-    } catch (err) {
-      alert('Error creating product');
+    } catch (err: any) {
+      alert(err.message || 'Error creating product in database.');
     } finally {
       setLoading(false);
     }
@@ -81,22 +96,22 @@ export default function AdminProductsPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await db.addProductUsage({
-        projectId: selectedProjectId,
-        productId: selectedProductId,
+      await addProductUsage({
+        project_id: selectedProjectId,
+        product_id: selectedProductId,
         quantity: quantityUsed,
-        actorName: 'Engr. Ahmed Raza (Admin)',
       });
       setShowUsageModal(false);
-      setFeedback('Product consumption successfully allocated to project and stock deducted.');
+      setFeedback('Product consumption successfully recorded and stock deducted in PostgreSQL.');
       setTimeout(() => setFeedback(null), 4000);
       await loadAll();
-    } catch (err) {
-      alert('Error logging product usage');
+    } catch (err: any) {
+      alert(err.message || 'Error logging product usage in database.');
     } finally {
       setLoading(false);
     }
   };
+
 
   const filteredProducts = products.filter(
     (p) =>
@@ -210,10 +225,14 @@ export default function AdminProductsPage() {
                     <button
                       onClick={async () => {
                         if (window.confirm(`Permanently delete product "${p.name}"?`)) {
-                          await db.deleteProduct(p.id);
-                          await loadAll();
-                          setFeedback(`Product "${p.name}" deleted.`);
-                          setTimeout(() => setFeedback(null), 3000);
+                          try {
+                            await deleteProduct(p.id);
+                            await loadAll();
+                            setFeedback(`Product "${p.name}" deleted from database.`);
+                            setTimeout(() => setFeedback(null), 3000);
+                          } catch {
+                            alert('Failed to delete product from database.');
+                          }
                         }
                       }}
                       className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"

@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import {
+  getTasks,
+  getEmployees,
+  getProjects,
+  getClients,
+  createTask,
+  deleteTask,
+} from '@/lib/actions/db';
 import { Task, Employee, Project, Client, TaskStatus } from '@/types/database';
 import { formatDate, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -14,6 +21,8 @@ import {
   Calendar,
   X,
   CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminWorkPage() {
@@ -21,6 +30,7 @@ export default function AdminWorkPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Filters
   const [selectedEmployee, setSelectedEmployee] = useState('ALL');
@@ -41,27 +51,33 @@ export default function AdminWorkPage() {
   }, []);
 
   const loadAll = async () => {
-    const tsks = await db.getTasks();
-    const emps = await db.getEmployees();
-    const prjs = await db.getProjects();
-    const clis = await db.getClients();
-    setTasks(tsks);
-    setEmployees(emps);
-    setProjects(prjs);
-    setClients(clis);
+    setError(null);
+    try {
+      const tsks = await getTasks();
+      const emps = await getEmployees();
+      const prjs = await getProjects();
+      const clis = await getClients();
+      setTasks(tsks);
+      setEmployees(emps);
+      setProjects(prjs);
+      setClients(clis);
 
-    if (prjs.length > 0) setProjectId(prjs[0].id);
-    if (emps.length > 0) setAssignedEmployeeId(emps[0].id);
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    setDeadline(d.toISOString().split('T')[0]);
+      if (prjs.length > 0 && !projectId) setProjectId(prjs[0].id);
+      if (emps.length > 0 && !assignedEmployeeId) setAssignedEmployeeId(emps[0].id);
+      const d = new Date();
+      d.setDate(d.getDate() + 7);
+      setDeadline(d.toISOString().split('T')[0]);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load work data from database.');
+    }
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await db.createTask({
+      await createTask({
         title,
         description,
         project_id: projectId,
@@ -75,12 +91,13 @@ export default function AdminWorkPage() {
       setTitle('');
       setDescription('');
       await loadAll();
-    } catch (err) {
-      alert('Error creating task');
+    } catch (err: any) {
+      alert(err.message || 'Error creating task in database.');
     } finally {
       setLoading(false);
     }
   };
+
 
   const filteredTasks = tasks.filter((t) => {
     const matchesEmp = selectedEmployee === 'ALL' || t.assigned_employee_id === selectedEmployee;
@@ -243,11 +260,15 @@ export default function AdminWorkPage() {
                     <button
                       onClick={async () => {
                         if (window.confirm(`Delete task "${task.title}"?`)) {
-                          await db.deleteTask(task.id);
-                          await loadAll();
+                          try {
+                            await deleteTask(task.id);
+                            await loadAll();
+                          } catch {
+                            alert('Failed to delete task from database.');
+                          }
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
+                      className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
                       title="Delete Task"
                     >
                       <X className="w-3.5 h-3.5" />

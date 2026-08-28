@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServiceRequests } from '@/lib/actions/db';
 import { ServiceRequest, RequestStatus } from '@/types/database';
 import { useAuth } from '@/lib/auth-context';
 import { formatDate, formatDateTime, getStatusBadgeClass } from '@/lib/utils';
@@ -20,6 +20,7 @@ import {
   Eye,
   Activity,
   Layers,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function CustomerDashboardPage() {
@@ -27,24 +28,33 @@ export default function CustomerDashboardPage() {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadRequests() {
-      // In customer dashboard, show customer's requests
-      const all = await db.getServiceRequests();
-      if (user?.email) {
-        // Match user's requests or show all for demo if user has none
-        const userSpecific = all.filter(
-          (r) => r.customer_email.toLowerCase() === user.email.toLowerCase() || r.user_id === user.id
-        );
-        setRequests(userSpecific.length > 0 ? userSpecific : all);
-      } else {
-        setRequests(all);
+  const loadRequests = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (!user?.id) {
+        // Not authenticated — show nothing
+        setRequests([]);
+        return;
       }
+      // Pass userId to server action so database filters server-side
+      // NEVER fall back to showing all records
+      const userRequests = await getServiceRequests({ userId: user.id });
+      setRequests(userRequests);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load your service requests from database.');
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadRequests();
   }, [user]);
+
 
   const statusCounts = {
     ALL: requests.length,
@@ -139,12 +149,26 @@ export default function CustomerDashboardPage() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="text-xs text-slate-500 mt-2">Loading requests...</p>
               </div>
+            ) : error ? (
+              <div className="p-12 text-center space-y-3">
+                <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
+                <h3 className="text-base font-bold text-slate-800">Unable to load requests</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">{error}</p>
+                <button
+                  onClick={loadRequests}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Retry
+                </button>
+              </div>
             ) : filteredRequests.length === 0 ? (
               <div className="p-12 text-center space-y-3">
                 <Layers className="w-10 h-10 text-slate-300 mx-auto" />
-                <h3 className="text-base font-bold text-slate-800">No requests found</h3>
+                <h3 className="text-base font-bold text-slate-800">No service requests found</h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  You do not have any requests in &ldquo;{selectedStatus}&rdquo; status.
+                  {selectedStatus === 'ALL'
+                    ? 'You have not submitted any service requests yet.'
+                    : `You do not have any requests with status "${selectedStatus}".`}
                 </p>
                 <Link
                   href="/request"

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/db/data-store';
+import { getMonthlyOverview, getTasks, getAuditLogs } from '@/lib/actions/db';
 import { formatDate, formatCurrency, getStatusBadgeClass } from '@/lib/utils';
 import {
   Users,
@@ -17,6 +17,8 @@ import {
   ArrowRight,
   TrendingUp,
   ListTodo,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -26,20 +28,30 @@ export default function AdminDashboardPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadDashboardData() {
-      setLoading(true);
-      const data = await db.getMonthlyOverview(selectedMonth, selectedYear);
-      const allTasks = await db.getTasks();
-      const logs = await db.getAuditLogs();
+  const loadDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getMonthlyOverview(selectedMonth, selectedYear);
+      const allTasks = await getTasks();
+      const logs = await getAuditLogs();
       setOverview(data);
       setTasks(allTasks);
       setAuditLogs(logs.slice(0, 5));
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load dashboard data from database.');
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadDashboardData();
   }, [selectedMonth, selectedYear]);
+
 
   const months = [
     { value: 0, label: 'January' },
@@ -99,12 +111,30 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {loading || !overview ? (
+      {error ? (
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-8 rounded-3xl text-center space-y-4">
+          <div className="flex items-center justify-center gap-2 text-sm font-bold">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+          <p className="text-xs text-slate-400">
+            Please verify your Neon PostgreSQL connection and configuration.
+          </p>
+          <button
+            onClick={loadDashboardData}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Retry Connection</span>
+          </button>
+        </div>
+      ) : loading || !overview ? (
         <div className="p-16 text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
           <p className="text-xs text-slate-400 mt-3">Recalculating monthly performance metrics...</p>
         </div>
       ) : (
+
         <>
           {/* ============================================================= */}
           {/* 1. MASTER KPI CARDS */}

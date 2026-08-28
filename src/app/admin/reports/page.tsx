@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import { getMonthlyOverview, getTasks, getEmployees, getClients } from '@/lib/actions/db';
 import { exportToCSV, exportToPDF, formatCurrency, formatDate } from '@/lib/utils';
 import {
   FileBarChart,
@@ -13,6 +13,8 @@ import {
   Package,
   FileSpreadsheet,
   FileText,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminReportsPage() {
@@ -21,23 +23,34 @@ export default function AdminReportsPage() {
   const [reportData, setReportData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'PROJECTS' | 'EMPLOYEES' | 'CLIENTS' | 'PRODUCTS'>('PROJECTS');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(false);
-      const data = await db.getMonthlyOverview(selectedMonth, selectedYear);
-      const allTasks = await db.getTasks();
-      const allEmps = await db.getEmployees();
-      const allClis = await db.getClients();
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getMonthlyOverview(selectedMonth, selectedYear);
+      const allTasks = await getTasks();
+      const allEmps = await getEmployees();
+      const allClis = await getClients();
       setReportData({
         ...data,
         allTasks,
         allEmps,
         allClis,
       });
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load reports data from database.');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, [selectedMonth, selectedYear]);
+
 
   const months = [
     { value: 0, label: 'January' },

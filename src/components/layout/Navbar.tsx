@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/brand/Logo';
 import { useAuth } from '@/lib/auth-context';
-import { db } from '@/lib/db/data-store';
+import { getCompanySettings } from '@/lib/actions/db';
 import { CompanySettings } from '@/types/database';
 import {
   Phone,
@@ -49,8 +49,9 @@ export const Navbar: React.FC = () => {
   };
 
   useEffect(() => {
-    db.getCompanySettings().then(setSettings);
+    getCompanySettings().then(setSettings).catch(() => null);
   }, []);
+
 
   const navLinks = [
     { name: 'Home', href: '/' },

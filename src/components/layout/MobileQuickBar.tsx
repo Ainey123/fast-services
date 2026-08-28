@@ -3,15 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Phone, MessageSquare, PlusCircle, MapPin } from 'lucide-react';
-import { db } from '@/lib/db/data-store';
+import { getCompanySettings } from '@/lib/actions/db';
 import { CompanySettings } from '@/types/database';
+
 
 export const MobileQuickBar: React.FC = () => {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
 
   useEffect(() => {
-    db.getCompanySettings().then(setSettings);
+    getCompanySettings().then(setSettings).catch(() => null);
   }, []);
+
 
   const cleanPhone = settings?.phone || '+92 300 4545280';
   const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');

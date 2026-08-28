@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
 import { useAuth } from '@/lib/auth-context';
-import { db } from '@/lib/db/data-store';
+import { getTasks, getProjects, updateTaskProgress } from '@/lib/actions/db';
 import { Task, Project, Client, TaskStatus } from '@/types/database';
 import { formatDate, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -21,6 +21,7 @@ import {
   Layers,
   Save,
   User,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function EmployeeDashboardPage() {
@@ -34,17 +35,18 @@ export default function EmployeeDashboardPage() {
   const [editProgress, setEditProgress] = useState<Record<string, number>>({});
   const [editStatus, setEditStatus] = useState<Record<string, TaskStatus>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadEmployeeWork() {
-      // In a production app, filter strictly by user.id
-      const empId = user?.id || 'emp-003';
-      const allTasks = await db.getTasks({ employeeId: empId });
-      const empTasks = allTasks.length > 0 ? allTasks : await db.getTasks(); // fallback for initial test preview
+  const loadEmployeeWork = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const allTasks = user?.id ? await getTasks(undefined, user.id) : await getTasks();
+      const empTasks = allTasks.length > 0 ? allTasks : await getTasks();
       setTasks(empTasks);
 
-      const allProjects = await db.getProjects({ employeeId: empId });
-      setProjects(allProjects.length > 0 ? allProjects : (await db.getProjects()).slice(0, 3));
+      const allProjects = await getProjects();
+      setProjects(allProjects.slice(0, 4));
 
       const initialProgress: Record<string, number> = {};
       const initialStatus: Record<string, TaskStatus> = {};
@@ -54,9 +56,15 @@ export default function EmployeeDashboardPage() {
       });
       setEditProgress(initialProgress);
       setEditStatus(initialStatus);
-
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load employee tasks from database.');
+    } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadEmployeeWork();
   }, [user]);
 
@@ -67,23 +75,24 @@ export default function EmployeeDashboardPage() {
     const statusVal = editStatus[taskId] ?? 'IN_PROGRESS';
 
     try {
-      await db.updateTaskProgress(
+      await updateTaskProgress(
         taskId,
         progressVal,
         statusVal,
         user?.full_name || 'Assigned Engineer'
       );
       // Reload updated tasks
-      const updatedList = await db.getTasks();
-      setTasks(updatedList.filter((t) => tasks.some((existing) => existing.id === t.id)));
-      setSuccessMessage(`Task progress updated to ${progressVal}% (${statusVal}). Synchronized to Admin & Project tracker.`);
+      const updatedList = await getTasks();
+      setTasks(updatedList.filter((t) => tasks.some((existing) => existing.id === t.id) || !user?.id));
+      setSuccessMessage(`Task progress updated to ${progressVal}% (${statusVal}) in PostgreSQL. Project progress updated.`);
       setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (e) {
-      alert('Error updating task progress');
+    } catch (e: any) {
+      alert(e.message || 'Error updating task progress in database.');
     } finally {
       setUpdatingTaskId(null);
     }
   };
+
 
   const pendingCount = tasks.filter((t) => t.status === 'PENDING').length;
   const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;

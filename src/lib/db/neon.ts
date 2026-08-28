@@ -5,12 +5,11 @@ neonConfig.fetchConnectionCache = true;
 
 export function getConnectionString(): string {
   const url =
-    process.env.FAST_SERVICES_DATABASE_URL ||
-    process.env.NEON_DATABASE_URL ||
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL ||
-    // Hardcoded production fallback — ensures Vercel always connects even if env vars are not configured
-    'postgresql://neondb_owner:npg_XVOCZUI9gt8q@ep-patient-river-axs53glt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
+    process.env.FAST_SERVICES_DATABASE_URL ||
+    process.env.NEON_DATABASE_URL ||
+    '';
   return url.trim();
 }
 
@@ -35,8 +34,8 @@ export type NeonQueryFunction = (
 export const sql: NeonQueryFunction = ((strings: TemplateStringsArray, ...values: any[]) => {
   const conn = getConnectionString();
   if (!conn || conn.includes('placeholder')) {
-    console.warn('[Neon DB] No active database connection string found in environment variables.');
-    throw new Error('Database connection not configured. Please set DATABASE_URL or FAST_SERVICES_DATABASE_URL.');
+    console.error('[Neon DB] No active database connection string found in environment variables.');
+    throw new Error('Database connection not configured. Please set DATABASE_URL or POSTGRES_URL in environment variables.');
   }
   const client = neon(conn);
   return client(strings, ...values);
@@ -46,8 +45,12 @@ export const sql: NeonQueryFunction = ((strings: TemplateStringsArray, ...values
 let poolInstance: Pool | null = null;
 export function getNeonPool(): Pool {
   const conn = getConnectionString();
-  if (!poolInstance && conn) {
+  if (!conn) {
+    throw new Error('Database connection string not configured for Neon pool.');
+  }
+  if (!poolInstance) {
     poolInstance = new Pool({ connectionString: conn });
   }
-  return poolInstance || new Pool({ connectionString: 'postgres://placeholder@placeholder.com/db' });
+  return poolInstance;
 }
+

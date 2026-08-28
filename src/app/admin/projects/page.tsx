@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/db/data-store';
+import {
+  getProjects,
+  getClients,
+  getServices,
+  getEmployees,
+  createProject,
+  updateProject,
+  deleteProject,
+} from '@/lib/actions/db';
 import { Project, Client, Service, Employee, ProjectPriority, ProjectStatus } from '@/types/database';
 import { formatDate, getStatusBadgeClass } from '@/lib/utils';
 import {
@@ -17,6 +25,8 @@ import {
   X,
   TrendingUp,
   Trash2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function AdminProjectsPage() {
@@ -27,6 +37,7 @@ export default function AdminProjectsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form states
   const [name, setName] = useState('');
@@ -44,31 +55,37 @@ export default function AdminProjectsPage() {
   }, []);
 
   const loadAll = async () => {
-    const prjs = await db.getProjects();
-    const clis = await db.getClients();
-    const srvs = await db.getServices();
-    const emps = await db.getEmployees();
-    setProjects(prjs);
-    setClients(clis);
-    setServices(srvs);
-    setEmployees(emps);
-    if (clis.length > 0) setClientId(clis[0].id);
-    if (srvs.length > 0) setServiceId(srvs[0].id);
+    setError(null);
+    try {
+      const prjs = await getProjects();
+      const clis = await getClients();
+      const srvs = await getServices();
+      const emps = await getEmployees();
+      setProjects(prjs);
+      setClients(clis);
+      setServices(srvs);
+      setEmployees(emps);
+      if (clis.length > 0 && !clientId) setClientId(clis[0].id);
+      if (srvs.length > 0 && !serviceId) setServiceId(srvs[0].id);
 
-    // Default expected date 30 days ahead
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    setExpectedDate(d.toISOString().split('T')[0]);
+      // Default expected date 30 days ahead
+      const d = new Date();
+      d.setDate(d.getDate() + 30);
+      setExpectedDate(d.toISOString().split('T')[0]);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load projects from database.');
+    }
   };
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await db.createProject({
+      await createProject({
         name,
         client_id: clientId,
-        service_id: serviceId,
+        service_id: serviceId || undefined,
         description,
         priority,
         status: 'PLANNED',
@@ -83,8 +100,8 @@ export default function AdminProjectsPage() {
       setDescription('');
       setNotes('');
       await loadAll();
-    } catch (err) {
-      alert('Error creating project');
+    } catch (err: any) {
+      alert(err.message || 'Error creating project in database.');
     } finally {
       setLoading(false);
     }
@@ -94,9 +111,14 @@ export default function AdminProjectsPage() {
     const proj = projects.find((p) => p.id === id);
     if (!proj) return;
     const progressVal = newStatus === 'COMPLETED' ? 100 : proj.progress;
-    await db.updateProject(id, { status: newStatus, progress: progressVal });
-    await loadAll();
+    try {
+      await updateProject(id, { status: newStatus, progress: progressVal });
+      await loadAll();
+    } catch (err: any) {
+      alert('Failed to update project status in database.');
+    }
   };
+
 
   const filteredProjects = projects.filter((p) => {
     const matchesSearch =
@@ -240,11 +262,15 @@ export default function AdminProjectsPage() {
                 <button
                   onClick={async () => {
                     if (window.confirm(`Are you sure you want to delete project "${proj.name}"?`)) {
-                      await db.deleteProject(proj.id);
-                      await loadAll();
+                      try {
+                        await deleteProject(proj.id);
+                        await loadAll();
+                      } catch {
+                        alert('Failed to delete project from database.');
+                      }
                     }
                   }}
-                  className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all"
+                  className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
                   title="Delete Project"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

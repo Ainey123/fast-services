@@ -1,8 +1,8 @@
-﻿import { neon } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
+import { getDbUrl } from './get-db-url.mjs';
 
-// Test the EXACT same logic the server action uses
-const conn = 'postgresql://neondb_owner:npg_XVOCZUI9gt8q@ep-patient-river-axs53glt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
+const conn = getDbUrl();
 const sql = neon(conn);
 
 async function simulateLogin(email, password) {

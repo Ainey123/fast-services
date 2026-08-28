@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getServices } from '@/lib/actions/db';
 import { Service } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -22,13 +22,27 @@ export default function ServicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
+    getServices(true)
+      .then((data) => {
+        setServices(data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError('Unable to load services from database.');
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    db.getServices(true).then((data) => {
-      setServices(data);
-      setLoading(false);
-    });
+    loadData();
   }, []);
+
 
   const categories = ['ALL', ...Array.from(new Set(services.map((s) => s.category)))];
 
@@ -163,10 +177,36 @@ export default function ServicesPage() {
             ))}
           </div>
 
-          {filteredServices.length === 0 && !loading && (
+          {loading && (
+            <div className="py-20 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-xs text-slate-500 mt-2">Loading services from database...</p>
+            </div>
+          )}
+
+          {error && !loading && (
+            <div className="py-16 text-center bg-rose-50 rounded-2xl border border-rose-200 mt-6 p-6">
+              <p className="text-rose-700 font-medium text-base">{error}</p>
+              <button
+                onClick={loadData}
+                className="mt-4 px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && services.length === 0 && (
+            <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 mt-6">
+              <p className="text-slate-600 font-semibold text-lg">No services have been added yet.</p>
+              <p className="text-slate-400 text-sm mt-1">Please check back later or contact administration.</p>
+            </div>
+          )}
+
+          {!loading && !error && services.length > 0 && filteredServices.length === 0 && (
             <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 mt-6">
               <p className="text-slate-500 text-base">
-                No services found matching &ldquo;{searchQuery}&rdquo;.
+                No services found matching your criteria.
               </p>
             </div>
           )}

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { db } from '@/lib/db/data-store';
+import { getCompanySettings } from '@/lib/actions/db';
 import { CompanySettings } from '@/types/database';
 import {
   Phone,
@@ -23,8 +23,9 @@ export default function ContactPage() {
   const [messageSent, setMessageSent] = useState(false);
 
   useEffect(() => {
-    db.getCompanySettings().then(setSettings);
+    getCompanySettings().then(setSettings).catch((err) => console.error(err));
   }, []);
+
 
   const cleanPhone = settings?.phone || '+92 300 4545280';
   const cleanWhatsApp = (settings?.whatsapp || '+923004545280').replace(/[^0-9]/g, '');

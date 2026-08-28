@@ -1,17 +1,29 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db/data-store';
+import { getCompanySettings, updateCompanySettings } from '@/lib/actions/db';
 import { CompanySettings } from '@/types/database';
-import { Settings, Save, CheckCircle2, Building2, Phone, MessageSquare, Mail, MapPin, Clock } from 'lucide-react';
+import { Settings, Save, CheckCircle2, Building2, Phone, MessageSquare, Mail, MapPin, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<CompanySettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSettings = async () => {
+    setError(null);
+    try {
+      const data = await getCompanySettings();
+      setSettings(data);
+    } catch (err: any) {
+      console.error(err);
+      setError('Unable to load company settings from database.');
+    }
+  };
 
   useEffect(() => {
-    db.getCompanySettings().then(setSettings);
+    loadSettings();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -21,17 +33,38 @@ export default function AdminSettingsPage() {
     setSuccess(false);
 
     try {
-      await db.updateCompanySettings(settings, 'Engr. Ahmed Raza (Admin)');
+      await updateCompanySettings(settings, 'Admin');
       setSuccess(true);
       setTimeout(() => setSuccess(false), 4000);
-    } catch (e) {
-      alert('Error updating settings');
+    } catch (e: any) {
+      alert(e.message || 'Error updating settings in database.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (!settings) return <div className="p-8 text-white">Loading configuration...</div>;
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-6 rounded-3xl text-center space-y-4">
+          <div className="flex items-center justify-center gap-2 text-sm font-bold">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadSettings}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition-all"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Retry</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!settings) return <div className="p-8 text-white">Loading configuration from database...</div>;
+
 
   return (
     <div className="p-4 sm:p-8 space-y-6">
