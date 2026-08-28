@@ -184,102 +184,125 @@ export default function AdminProjectsPage() {
         </div>
       </div>
 
-      {/* Projects List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredProjects.map((proj) => (
-          <div
-            key={proj.id}
-            className="bg-slate-950 rounded-3xl border border-slate-800 p-6 space-y-4 hover:border-slate-700 transition-all flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
-                  {proj.project_code}
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                      proj.priority === 'URGENT'
-                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                        : proj.priority === 'HIGH'
-                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}
-                  >
-                    {proj.priority} PRIORITY
+      {/* Projects Grid */}
+      {filteredProjects.length === 0 ? (
+        <div className="py-20 text-center bg-slate-950 rounded-3xl border border-slate-800 space-y-3">
+          <Layers className="w-10 h-10 text-slate-600 mx-auto" />
+          <h3 className="text-base font-bold text-white">
+            {projects.length === 0 ? 'No projects found in database.' : 'No projects match your filter.'}
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            {projects.length === 0
+              ? 'Click the "Launch Project" button above to initiate your first engineering project in Neon.'
+              : 'Try selecting a different status filter.'}
+          </p>
+          {projects.length === 0 && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Launch First Project</span>
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((proj) => (
+            <div
+              key={proj.id}
+              className="bg-slate-950 rounded-3xl border border-slate-800 p-6 space-y-4 hover:border-slate-700 transition-all flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+                    {proj.project_code}
                   </span>
 
-                  <select
-                    value={proj.status}
-                    onChange={(e) => handleStatusChange(proj.id, e.target.value as ProjectStatus)}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-900 focus:outline-none ${getStatusBadgeClass(
-                      proj.status
-                    )}`}
-                  >
-                    <option value="PLANNED">PLANNED</option>
-                    <option value="IN_PROGRESS">IN_PROGRESS</option>
-                    <option value="ON_HOLD">ON_HOLD</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                        proj.priority === 'URGENT'
+                          ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                          : proj.priority === 'HIGH'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                          : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}
+                    >
+                      {proj.priority} PRIORITY
+                    </span>
+
+                    <select
+                      value={proj.status}
+                      onChange={(e) => handleStatusChange(proj.id, e.target.value as ProjectStatus)}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded border bg-slate-900 focus:outline-none ${getStatusBadgeClass(
+                        proj.status
+                      )}`}
+                    >
+                      <option value="PLANNED">PLANNED</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="ON_HOLD">ON_HOLD</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                      <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h2 className="text-base font-bold text-white">{proj.name}</h2>
+                <div className="text-xs text-slate-400">
+                  Client: <strong className="text-slate-200">{proj.client?.company_name}</strong>
+                </div>
+
+                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                  {proj.description}
+                </p>
+
+                {/* Visual Progress Bar */}
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex justify-between text-xs font-mono font-bold">
+                    <span className="text-slate-400">Overall Progress</span>
+                    <span className="text-blue-400">{proj.progress}%</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 rounded-full transition-all duration-500"
+                      style={{ width: `${proj.progress}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
 
-              <h2 className="text-base font-bold text-white">{proj.name}</h2>
-              <div className="text-xs text-slate-400">
-                Client: <strong className="text-slate-200">{proj.client?.company_name}</strong>
-              </div>
-
-              <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                {proj.description}
-              </p>
-
-              {/* Visual Progress Bar */}
-              <div className="space-y-1.5 pt-2">
-                <div className="flex justify-between text-xs font-mono font-bold">
-                  <span className="text-slate-400">Overall Progress</span>
-                  <span className="text-blue-400">{proj.progress}%</span>
-                </div>
-                <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-amber-500 rounded-full transition-all duration-500"
-                    style={{ width: `${proj.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-900 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1 text-[11px]">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                Target: {formatDate(proj.expected_completion_date)}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-500 text-[10px]">
-                  {proj.tasks?.length || 0} Sub-Tasks
+              <div className="pt-4 border-t border-slate-900 flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1 text-[11px]">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  Target: {formatDate(proj.expected_completion_date)}
                 </span>
-                <button
-                  onClick={async () => {
-                    if (window.confirm(`Are you sure you want to delete project "${proj.name}"?`)) {
-                      try {
-                        await deleteProject(proj.id);
-                        await loadAll();
-                      } catch {
-                        alert('Failed to delete project from database.');
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 text-[10px]">
+                    {proj.tasks?.length || 0} Sub-Tasks
+                  </span>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to delete project "${proj.name}"?`)) {
+                        try {
+                          await deleteProject(proj.id);
+                          await loadAll();
+                        } catch {
+                          alert('Failed to delete project from database.');
+                        }
                       }
-                    }
-                  }}
-                  className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
-                  title="Delete Project"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                    }}
+                    className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Project Modal */}
       {showAddModal && (

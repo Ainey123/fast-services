@@ -2,8 +2,14 @@ import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import { getDbUrl } from './get-db-url.mjs';
 
-const connectionString = getDbUrl();
+// PERMANENT SAFETY LOCK: Seed script is DISABLED in production to prevent fake data injection.
+if (!process.env.ALLOW_SEED_EXECUTION) {
+  console.error('⛔ ERROR: Seeding is permanently disabled in production mode.');
+  console.error('To override for manual local tests, set ALLOW_SEED_EXECUTION=true');
+  process.exit(1);
+}
 
+const connectionString = getDbUrl();
 
 async function populateFullEnterprise() {
   const sql = neon(connectionString);

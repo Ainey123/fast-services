@@ -190,59 +190,73 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-850">
-              {filteredProducts.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="font-bold text-white text-sm">{p.name}</div>
-                    <div className="font-mono text-[10px] text-amber-400">{p.product_code}</div>
-                  </td>
-                  <td className="py-4 px-6 text-slate-300">{p.category}</td>
-                  <td className="py-4 px-6 font-mono font-bold text-slate-200">
-                    {formatCurrency(p.price)} / {p.unit}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`font-mono font-bold ${
-                        p.stock < 50 ? 'text-rose-400' : 'text-emerald-400'
-                      }`}
-                    >
-                      {p.stock} {p.unit}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 font-mono text-slate-300">
-                    {formatCurrency(p.stock * p.price)}
-                  </td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getStatusBadgeClass(
-                        p.status
-                      )}`}
-                    >
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(`Permanently delete product "${p.name}"?`)) {
-                          try {
-                            await deleteProduct(p.id);
-                            await loadAll();
-                            setFeedback(`Product "${p.name}" deleted from database.`);
-                            setTimeout(() => setFeedback(null), 3000);
-                          } catch {
-                            alert('Failed to delete product from database.');
-                          }
-                        }
-                      }}
-                      className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
-                      title="Delete Product"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center text-slate-500">
+                    <Package className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                    <div className="font-bold text-white text-sm">
+                      {products.length === 0 ? 'No inventory products in database.' : 'No products match your search.'}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      {products.length === 0 ? 'Click "Add New Product" to stock your first item in Neon.' : 'Try a different search term.'}
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredProducts.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-900/40 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-white text-sm">{p.name}</div>
+                      <div className="font-mono text-[10px] text-amber-400">{p.product_code}</div>
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">{p.category}</td>
+                    <td className="py-4 px-6 font-mono font-bold text-slate-200">
+                      {formatCurrency(p.price)} / {p.unit}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`font-mono font-bold ${
+                          p.stock < 50 ? 'text-rose-400' : 'text-emerald-400'
+                        }`}
+                      >
+                        {p.stock} {p.unit}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 font-mono text-slate-300">
+                      {formatCurrency(p.stock * p.price)}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getStatusBadgeClass(
+                          p.status
+                        )}`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`Permanently delete product "${p.name}"?`)) {
+                            try {
+                              await deleteProduct(p.id);
+                              await loadAll();
+                              setFeedback(`Product "${p.name}" deleted from database.`);
+                              setTimeout(() => setFeedback(null), 3000);
+                            } catch {
+                              alert('Failed to delete product from database.');
+                            }
+                          }
+                        }}
+                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white border border-rose-500/20 transition-all inline-flex items-center"
+                        title="Delete Product"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

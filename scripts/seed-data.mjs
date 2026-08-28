@@ -2,8 +2,13 @@ import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import { getDbUrl } from './get-db-url.mjs';
 
-const connectionString = getDbUrl();
+// PERMANENT SAFETY LOCK: Seed script is DISABLED in production.
+if (!process.env.ALLOW_SEED_EXECUTION) {
+  console.error('⛔ ERROR: Seeding is permanently disabled in production mode.');
+  process.exit(1);
+}
 
+const connectionString = getDbUrl();
 
 async function seed() {
   const sql = neon(connectionString);

@@ -203,79 +203,74 @@ export default function AdminWorkPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-850">
-              {filteredTasks.map((task) => (
-                <tr key={task.id} className="hover:bg-slate-900/40 transition-colors">
-                  <td className="py-4 px-6">
-                    <div className="font-bold text-white">
-                      {task.assigned_employee?.profile?.full_name || 'Unassigned'}
+              {filteredTasks.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center text-slate-500">
+                    <ListTodo className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+                    <div className="font-bold text-white text-sm">
+                      {tasks.length === 0 ? 'No tasks assigned in database.' : 'No tasks match your selected filters.'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
-                      {task.assigned_employee?.position}
+                    <div className="text-xs text-slate-400 mt-1">
+                      {tasks.length === 0 ? 'Click "Assign New Task" above to dispatch your first task in Neon.' : 'Try adjusting the employee or project filters.'}
                     </div>
-                  </td>
-
-                  <td className="py-4 px-6 text-slate-300 font-medium">
-                    {task.project?.client?.company_name || 'Institutional Client'}
-                  </td>
-
-                  <td className="py-4 px-6 text-slate-200">
-                    <div className="font-semibold">{task.project?.name}</div>
-                    <div className="font-mono text-[10px] text-blue-400">
-                      {task.project?.project_code}
-                    </div>
-                  </td>
-
-                  <td className="py-4 px-6">
-                    <div className="text-white font-medium">{task.title}</div>
-                    <div className="text-[10px] text-slate-500 line-clamp-1">{task.description}</div>
-                  </td>
-
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getStatusBadgeClass(
-                        task.status
-                      )}`}
-                    >
-                      {task.status}
-                    </span>
-                  </td>
-
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-blue-400">{task.progress}%</span>
-                      <div className="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
-                        <div
-                          className="h-full bg-blue-600 rounded-full"
-                          style={{ width: `${task.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-4 px-6 text-slate-400 font-mono">
-                    {formatDate(task.deadline)}
-                  </td>
-
-                  <td className="py-4 px-6 text-right">
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(`Delete task "${task.title}"?`)) {
-                          try {
-                            await deleteTask(task.id);
-                            await loadAll();
-                          } catch {
-                            alert('Failed to delete task from database.');
-                          }
-                        }
-                      }}
-                      className="p-1 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white transition-colors"
-                      title="Delete Task"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTasks.map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-900/40 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-white">
+                        {task.assigned_employee?.profile?.full_name || 'Unassigned'}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {task.assigned_employee?.position}
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-6 text-slate-300 font-medium">
+                      {task.project?.client?.company_name || 'Institutional Client'}
+                    </td>
+
+                    <td className="py-4 px-6 text-slate-200">
+                      <div className="font-semibold">{task.project?.name}</div>
+                      <div className="font-mono text-[10px] text-blue-400">
+                        {task.project?.project_code}
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <div className="text-white font-medium">{task.title}</div>
+                      <div className="text-[10px] text-slate-500 line-clamp-1">{task.description}</div>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold border ${getStatusBadgeClass(
+                          task.status
+                        )}`}
+                      >
+                        {task.status}
+                      </span>
+                    </td>
+
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-blue-400">{task.progress}%</span>
+                        <div className="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                          <div
+                            className="h-full bg-blue-600 rounded-full"
+                            style={{ width: `${task.progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-6 font-mono text-[11px] text-slate-400">
+                      {formatDate(task.deadline)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
