@@ -1,7 +1,7 @@
 import { neon, neonConfig, Pool } from '@neondatabase/serverless';
 
-// Configure WebSocket connection caching for Serverless environments
-neonConfig.fetchConnectionCache = true;
+// Guarantee fresh database queries on serverless execution (no stale caching)
+neonConfig.fetchConnectionCache = false;
 
 export function getConnectionString(): string {
   const url =
