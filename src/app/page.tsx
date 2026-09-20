@@ -315,6 +315,84 @@ export default function HomePage() {
         </section>
 
         {/* ================================================================= */}
+        {/* 3.5 REAL ESTATE & PLOT SERVICES PROMOTION */}
+        {/* ================================================================= */}
+        <section className="py-16 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white relative overflow-hidden border-b border-slate-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                  <span>🏢 New Department</span>
+                  <span>•</span>
+                  <span>Plot Engineering & Real Estate Hub</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+                  Turnkey Plot Development, Demarcation & Construction Across Pakistan
+                </h2>
+
+                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                  Have a residential, commercial, or industrial plot in <strong>LDA Avenue 1, Al Jannat Ul Firdous, Bahria Town, DHA, Raiwind Road, Multan, Faisalabad, or Islamabad</strong>? We deliver laser plot demarcation, solid boundary walls, underground water & sewerage networks, transformer substations, and complete A+ turnkey building construction.
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div className="text-amber-400 font-bold text-xs">Laser Demarcation</div>
+                    <div className="text-[11px] text-slate-400">Boundary & Soil Tests</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div className="text-blue-400 font-bold text-xs">Boundary Walls</div>
+                    <div className="text-[11px] text-slate-400">Solid Gates & Security</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div className="text-emerald-400 font-bold text-xs">Turnkey Build</div>
+                    <div className="text-[11px] text-slate-400">Grey & Full Finishing</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 pt-4">
+                  <Link
+                    href="/real-estate"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-xl shadow-blue-600/30 transition-all"
+                  >
+                    <span>Explore Real Estate & Plot Hub</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+
+                  <a
+                    href="https://wa.me/923004545280?text=Hello%20Fast%20Services,%20I%20want%20to%20inquire%20about%20plot%20development%20and%20construction%20services."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-sm transition-all"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>WhatsApp Plot Inquiry</span>
+                  </a>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5">
+                <div className="relative rounded-3xl overflow-hidden border border-slate-700 shadow-2xl group">
+                  <img
+                    src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80"
+                    alt="Real Estate and Plot Development"
+                    className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                  <div className="absolute bottom-6 left-6 right-6 space-y-2">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 font-bold">
+                      Prime Societies
+                    </span>
+                    <h3 className="text-lg font-bold text-white">Residential, Commercial & Industrial Plots</h3>
+                    <p className="text-xs text-slate-300">Complete end-to-end engineering infrastructure & building services.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================= */}
         {/* 4. WHY CHOOSE US */}
         {/* ================================================================= */}
         <section className="py-20 bg-white border-y border-slate-200">

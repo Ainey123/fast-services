@@ -34,3 +34,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+*.docx
+scripts/docx_temp/
+scripts/extracted-profile-text.txt
+

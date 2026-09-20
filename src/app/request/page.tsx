@@ -60,7 +60,16 @@ function ServiceRequestForm() {
   useEffect(() => {
     getServices(true).then((srvs) => {
       setServices(srvs);
-      if (!selectedServiceId && srvs.length > 0) {
+      if (preSelectedServiceId) {
+        const match = srvs.find(
+          (s) => s.id === preSelectedServiceId || s.slug === preSelectedServiceId
+        );
+        if (match) {
+          setSelectedServiceId(match.id);
+        } else if (srvs.length > 0) {
+          setSelectedServiceId(srvs[0].id);
+        }
+      } else if (!selectedServiceId && srvs.length > 0) {
         setSelectedServiceId(srvs[0].id);
       }
     }).catch(console.error);
