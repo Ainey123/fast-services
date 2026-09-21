@@ -20,7 +20,9 @@ import {
   X,
   FileCheck,
   Zap,
-  HardHat
+  HardHat,
+  Download,
+  FileText
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
@@ -166,7 +168,7 @@ export default function RealEstatePage() {
                 From certified plot demarcation, soil testing, and solid boundary walls to underground utility networks and turnkey building construction. FAST Engineering Solutions empowers property owners and developers across Pakistan.
               </p>
 
-              <div className="flex flex-wrap items-center gap-4 pt-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-4">
                 <button
                   onClick={() => handleOpenInquiry()}
                   className="px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-xl shadow-blue-600/30 transition-all flex items-center gap-2"
@@ -176,10 +178,19 @@ export default function RealEstatePage() {
                 </button>
 
                 <a
+                  href="/Fast_Services_Real_Estate_Plot_Brochure.pdf"
+                  download="Fast_Services_Real_Estate_Plot_Brochure.pdf"
+                  className="px-5 py-3.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-amber-500/10"
+                >
+                  <Download className="w-4 h-4 text-amber-400" />
+                  <span>Download Plot Brochure (PDF)</span>
+                </a>
+
+                <a
                   href="https://wa.me/923004545280?text=Hello%20Fast%20Engineering%20Solutions,%20I%20need%20plot%20development%20services."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-bold text-sm transition-all flex items-center gap-2"
+                  className="px-5 py-3.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 font-bold text-sm transition-all flex items-center gap-2"
                 >
                   <MessageSquare className="w-4 h-4" />
                   <span>WhatsApp Consultant</span>

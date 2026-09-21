@@ -143,6 +143,11 @@ export const Footer: React.FC = () => {
           </h4>
           <ul className="space-y-2.5 text-sm">
             <li>
+              <Link href="/about" className="text-slate-300 hover:text-blue-400 font-semibold transition-colors">
+                About Us & Company Profile
+              </Link>
+            </li>
+            <li>
               <Link href="/real-estate" className="text-amber-400 font-semibold hover:text-amber-300 transition-colors flex items-center gap-1.5">
                 <span>Real Estate & Plot Hub</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">New</span>
