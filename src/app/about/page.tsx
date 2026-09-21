@@ -203,12 +203,6 @@ export default function AboutPage() {
                     Application Architecture & Development
                   </h2>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 text-xs font-mono font-bold">
-                    Next.js 14 • Serverless Neon DB
-                  </span>
-                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -229,17 +223,17 @@ export default function AboutPage() {
                     This unified digital operations platform for <strong>FAST ENGINEERING SOLUTIONS</strong> was architected, engineered, and built by <strong>AI Engineer Qurat ul Ain Sabir</strong>. 
                   </p>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    The system features a 100% real-time serverless PostgreSQL backend, instant service request dispatching, live milestone & GPS tracking, an interactive Real Estate & Plot Engineering Hub, PDF brochure generation, and Progressive Web App (PWA) offline resiliency for on-ground site engineers.
+                    The platform features instant service request dispatching, real-time project milestone tracking, an interactive Real Estate & Plot Engineering Hub, automated document generation, and mobile-ready accessibility for on-ground engineering teams.
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-2">
                     {[
                       'Full-Stack AI Architecture',
-                      'Serverless Neon PostgreSQL',
-                      'Enterprise ERP & Dispatch Workflows',
-                      'PWA & Offline Service Engine',
+                      'Enterprise Cloud Infrastructure',
+                      'ERP & Dispatch Workflows',
+                      'Field Engineering Mobility',
                       'Interactive Real Estate Portal',
-                      'Automated PDF Document Engine'
+                      'Automated Document Generation'
                     ].map((tech, i) => (
                       <span
                         key={i}
