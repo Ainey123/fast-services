@@ -217,12 +217,13 @@ export const Footer: React.FC = () => {
 
       {/* Bottom Copyright Bar */}
       <div className="border-t border-slate-900 py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <span>
             © {new Date().getFullYear()} <strong className="text-slate-400">FAST ENGINEERING SOLUTIONS</strong>. All rights reserved. (Operating Since 2012)
           </span>
-          <span className="text-slate-400">
-            FAST SERVICES — General Contractor & Construction Solutions
+          <span className="text-slate-400 flex items-center justify-center gap-1.5">
+            <span>Architected & Developed by</span>
+            <strong className="text-blue-400 font-bold">AI Engineer Qurat ul Ain Sabir</strong>
           </span>
         </div>
       </div>

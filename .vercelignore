@@ -1,0 +1,6 @@
+.next
+node_modules
+scripts
+*.docx
+.git
+.env*.tmp

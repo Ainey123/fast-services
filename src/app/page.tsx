@@ -25,6 +25,9 @@ import {
   Users,
   Building2,
   HelpCircle,
+  Code2,
+  Sparkles,
+  Terminal,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -602,6 +605,91 @@ export default function HomePage() {
                     </a>
                   </div>
                   <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================= */}
+        {/* 7. ABOUT & AI ENGINEERING ARCHITECTURE */}
+        {/* ================================================================= */}
+        <section className="py-20 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 text-white border-t border-slate-800 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none"></div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              {/* Left Column: Company Background & Heritage */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>About FAST Engineering Solutions</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight">
+                  Over a Decade of Engineering Excellence Across Pakistan
+                </h2>
+
+                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                  Established in 2012, <strong>FAST ENGINEERING SOLUTIONS (FES)</strong> is a premier general contractor delivering end-to-end engineering, procurement, and turnkey construction solutions. From multi-story commercial grey structures and high-voltage electrical substations to solar power plants, heavy generator synchronization, and prime plot development across Lahore, Multan, Faisalabad, and Islamabad.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
+                    <div className="text-2xl font-black text-blue-400">2012</div>
+                    <div className="text-xs font-bold text-slate-300">Founded & Operating</div>
+                    <div className="text-[11px] text-slate-400">12+ Years Industry Track Record</div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
+                    <div className="text-2xl font-black text-amber-400">500+</div>
+                    <div className="text-xs font-bold text-slate-300">Delivered Contracts</div>
+                    <div className="text-[11px] text-slate-400">Commercial & Industrial Projects</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: AI Engineer Credit Card */}
+              <div className="lg:col-span-6">
+                <div className="relative rounded-3xl p-8 bg-slate-900/90 border border-blue-500/30 shadow-2xl backdrop-blur-md space-y-6 overflow-hidden">
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Software Architecture</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] font-mono text-slate-400">
+                      <Code2 className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Next.js 14 • Serverless</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+                      Application Designer & Architect
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-black text-white mt-1">
+                      Qurat ul Ain Sabir
+                    </h3>
+                    <p className="text-blue-400 font-bold text-xs mt-0.5">
+                      AI Engineer & Full-Stack Architect
+                    </p>
+                  </div>
+
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    This unified enterprise platform was architected and built by <strong>AI Engineer Qurat ul Ain Sabir</strong>, featuring a real-time serverless PostgreSQL architecture, end-to-end customer service booking, live dispatch tracking, responsive Progressive Web App (PWA) capabilities, and the dedicated Real Estate & Plot Engineering Hub.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+                    {['AI & Full-Stack Engineering', 'Serverless PostgreSQL', 'PWA Offline Engine', 'Turnkey ERP Workflow'].map((skill, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-300 text-[11px] font-medium"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
