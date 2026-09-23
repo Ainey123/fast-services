@@ -45,12 +45,38 @@ export const PwaProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsModalOpen(true);
       };
 
+      // Auto-recovery for Next.js ChunkLoadError when a new version deploys
+      const handleChunkError = (event: ErrorEvent | PromiseRejectionEvent) => {
+        const errorMsg = (event as any)?.message || (event as any)?.reason?.message || '';
+        if (
+          errorMsg.includes('Loading chunk') ||
+          errorMsg.includes('ChunkLoadError') ||
+          errorMsg.includes('Failed to fetch dynamically imported module')
+        ) {
+          console.warn('Recovering from stale chunk cache after new deployment...');
+          const hasReloaded = sessionStorage.getItem('fs_chunk_reload');
+          if (!hasReloaded) {
+            sessionStorage.setItem('fs_chunk_reload', 'true');
+            window.location.reload();
+          }
+        }
+      };
+
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.addEventListener('open-install-modal', handleOpenModal);
+      window.addEventListener('error', handleChunkError);
+      window.addEventListener('unhandledrejection', handleChunkError);
+
+      const timer = setTimeout(() => {
+        sessionStorage.removeItem('fs_chunk_reload');
+      }, 5000);
 
       return () => {
+        clearTimeout(timer);
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         window.removeEventListener('open-install-modal', handleOpenModal);
+        window.removeEventListener('error', handleChunkError);
+        window.removeEventListener('unhandledrejection', handleChunkError);
       };
     }
   }, []);
