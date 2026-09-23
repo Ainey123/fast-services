@@ -1,22 +1,73 @@
 {
-  "name": "FAST SERVICES",
+  "id": "/",
+  "name": "FAST SERVICES - FAST ENGINEERING SOLUTIONS",
   "short_name": "FAST SERVICES",
-  "description": "Professional services by FAST ENGINEERING SOLUTIONS. General contractor delivering end-to-end construction solutions throughout Pakistan.",
+  "description": "General contractor delivering end-to-end engineering & construction solutions throughout Pakistan.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book Service Request",
+      "short_name": "Book Service",
+      "description": "Submit a quick engineering or construction service ticket",
+      "url": "/request",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Real Estate & Plot Hub",
+      "short_name": "Plots & Land",
+      "description": "Plot demarcation, boundary wall and turnkey build",
+      "url": "/real-estate",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Customer Dashboard",
+      "short_name": "My Dashboard",
+      "description": "Track ongoing service requests & dispatch status",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Contact Hotline",
+      "short_name": "Contact",
+      "description": "24/7 call and WhatsApp support",
+      "url": "/contact",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

@@ -28,6 +28,8 @@ import {
   Code2,
   Sparkles,
   Terminal,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -108,6 +110,14 @@ export default function HomePage() {
                 >
                   <Phone className="w-4 h-4 text-blue-400" />
                   <span>Contact Us</span>
+                </Link>
+
+                <Link
+                  href="/download"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-base shadow-lg shadow-amber-500/10 transition-all hover:scale-[1.02]"
+                >
+                  <Download className="w-5 h-5 text-amber-400" />
+                  <span>Get Mobile App</span>
                 </Link>
 
                 <a
@@ -605,6 +615,65 @@ export default function HomePage() {
                     </a>
                   </div>
                   <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================= */}
+        {/* 6.5. MOBILE APP PROMOTION (PWA) */}
+        {/* ================================================================= */}
+        <section className="py-16 bg-slate-950 text-white border-y border-slate-800 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="rounded-3xl p-8 sm:p-12 bg-gradient-to-r from-blue-950/60 via-slate-900 to-indigo-950/60 border border-blue-500/30 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="space-y-4 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Fast Services Mobile App (PWA)</span>
+                </div>
+                <h2 className="text-2xl sm:text-4xl font-black text-white leading-tight">
+                  Install Fast Services on Your Smartphone
+                </h2>
+                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                  Book repairs with 1-tap GPS location, track assigned engineers live, browse prime plots in real-time, and access emergency contacts offline. No App Store download required!
+                </p>
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <Link
+                    href="/download"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-600/30 transition-all hover:scale-105"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Mobile App</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('open-install-modal'));
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-sm transition-all"
+                  >
+                    <span>Instant Install Helper</span>
+                    <ArrowRight className="w-4 h-4 text-blue-400" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-shrink-0 w-full lg:w-auto flex justify-center">
+                <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-3 max-w-xs w-full">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div className="text-base font-bold text-white">Android & iOS Supported</div>
+                  <div className="text-xs text-slate-400">
+                    Works natively on Samsung, Apple iPhone, Xiaomi, Vivo, Oppo & Tablets
+                  </div>
+                  <div className="pt-2 border-t border-slate-800">
+                    <span className="text-[11px] text-emerald-400 font-bold">
+                      ✓ Instant Offline Caching Ready
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

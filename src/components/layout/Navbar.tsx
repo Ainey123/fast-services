@@ -27,24 +27,9 @@ export const Navbar: React.FC = () => {
   const { user, role, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<CompanySettings | null>(null);
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    const handlePrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handlePrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handlePrompt);
-  }, []);
-
-  const triggerInstall = async () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      const { outcome } = await installPrompt.userChoice;
-      if (outcome === 'accepted') setInstallPrompt(null);
-    } else {
-      alert('To install Fast Services:\n• On Chrome / Edge / Android: Click the Install icon in the browser address bar or menu.\n• On iOS Safari: Tap Share and select "Add to Home Screen".');
+  const openInstallModal = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-install-modal'));
     }
   };
 
@@ -52,13 +37,13 @@ export const Navbar: React.FC = () => {
     getCompanySettings().then(setSettings).catch(() => null);
   }, []);
 
-
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'About Us', href: '/about' },
     { name: 'Services', href: '/services' },
     { name: 'Real Estate & Plots', href: '/real-estate' },
     { name: 'Request Service', href: '/request' },
+    { name: 'Download App', href: '/download' },
     { name: 'Contact Us', href: '/contact' },
   ];
 
@@ -133,11 +118,11 @@ export const Navbar: React.FC = () => {
         <div className="hidden sm:flex items-center gap-2 lg:gap-3">
           {/* PWA Install Button */}
           <button
-            onClick={triggerInstall}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200 transition-all"
+            onClick={openInstallModal}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-all shadow-sm"
             title="Install Fast Services App"
           >
-            <Download className="w-3.5 h-3.5 text-amber-600" />
+            <Download className="w-3.5 h-3.5 text-blue-600" />
             <span className="hidden md:inline">Install App</span>
           </button>
 
@@ -311,16 +296,26 @@ export const Navbar: React.FC = () => {
             )}
 
             {/* Mobile PWA Install Button */}
-            <button
-              onClick={() => {
-                triggerInstall();
-                setMobileMenuOpen(false);
-              }}
-              className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 border border-amber-500/30 text-xs font-bold transition-colors"
-            >
-              <Download className="w-4 h-4 text-amber-600" />
-              <span>Install Fast Services (PWA App)</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <button
+                onClick={() => {
+                  openInstallModal();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                <span>Install Mobile App</span>
+              </button>
+              <Link
+                href="/download"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
+              >
+                <span>App Guide</span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+            </div>
           </div>
         </div>
       )}

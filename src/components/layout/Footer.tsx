@@ -82,6 +82,17 @@ export const Footer: React.FC = () => {
             {companyDescription}
           </p>
 
+          {/* Mobile App Download Card */}
+          <div className="pt-2">
+            <Link
+              href="/download"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-black shadow-md shadow-blue-600/30 transition-all hover:scale-105"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-300" />
+              <span>Install Mobile App (PWA)</span>
+            </Link>
+          </div>
+
           {/* Official Social Links */}
           <div className="pt-2 flex flex-wrap items-center gap-2 text-xs">
             <a
@@ -171,6 +182,12 @@ export const Footer: React.FC = () => {
             <li>
               <Link href="/admin" className="text-slate-400 hover:text-white transition-colors">
                 Admin Management Portal
+              </Link>
+            </li>
+            <li>
+              <Link href="/download" className="text-blue-400 font-bold hover:text-blue-300 transition-colors flex items-center gap-1.5">
+                <span>Download Mobile App</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">PWA</span>
               </Link>
             </li>
             <li>
