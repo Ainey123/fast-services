@@ -19,10 +19,10 @@ export const Logo: React.FC<LogoProps> = ({
   asLink = true,
 }) => {
   const sizeClasses = {
-    sm: { icon: 'w-7 h-7', title: 'text-base', sub: 'text-[9px]' },
-    md: { icon: 'w-9 h-9', title: 'text-lg', sub: 'text-[10px]' },
-    lg: { icon: 'w-12 h-12', title: 'text-2xl', sub: 'text-xs' },
-    xl: { icon: 'w-16 h-16', title: 'text-3xl', sub: 'text-sm' },
+    sm: { icon: 'w-8 h-8', title: 'text-base', sub: 'text-[9px]' },
+    md: { icon: 'w-10 h-10', title: 'text-lg', sub: 'text-[10px]' },
+    lg: { icon: 'w-14 h-14', title: 'text-2xl', sub: 'text-xs' },
+    xl: { icon: 'w-20 h-20', title: 'text-3xl', sub: 'text-sm' },
   }[size];
 
   const textColor = {
@@ -39,36 +39,15 @@ export const Logo: React.FC<LogoProps> = ({
 
   const logoContent = (
     <div className={`flex items-center gap-3 select-none ${className}`}>
-      {/* High-Precision Engineering Brand Icon */}
-      <div className={`relative flex-shrink-0 ${sizeClasses.icon} flex items-center justify-center`}>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-slate-900 rounded-xl shadow-md rotate-3 transition-transform group-hover:rotate-6"></div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-amber-500 to-amber-400 opacity-90 rounded-xl blur-[2px] -z-10 transform scale-95"></div>
-        
-        {/* Dynamic Vector SVG Geometry */}
-        <svg
-          viewBox="0 0 40 40"
-          className="relative w-4/5 h-4/5 text-white drop-shadow"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Engineering Gear/Hexagon Matrix */}
-          <polygon
-            points="20,4 34,12 34,28 20,36 6,28 6,12"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-blue-100/90"
-          />
-          {/* Lightning Velocity Bolt */}
-          <path
-            d="M22 8L12 21H20L18 32L28 19H20L22 8Z"
-            fill="#F59E0B"
-            stroke="#FFFFFF"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-        </svg>
+      {/* Official FES Company Logo Emblem */}
+      <div
+        className={`relative flex-shrink-0 ${sizeClasses.icon} rounded-full bg-white p-0.5 shadow-md border border-slate-200/80 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105`}
+      >
+        <img
+          src="/fes-logo.png"
+          alt="FAST ENGINEERING SOLUTIONS"
+          className="w-full h-full object-contain rounded-full"
+        />
       </div>
 
       {/* Corporate Typography */}
@@ -102,3 +81,4 @@ export const Logo: React.FC<LogoProps> = ({
 
   return logoContent;
 };
+

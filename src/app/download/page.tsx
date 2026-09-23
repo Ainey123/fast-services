@@ -138,10 +138,12 @@ export default function DownloadAppPage() {
                   {/* Mock Screen Content */}
                   <div className="bg-slate-950 rounded-[28px] p-5 space-y-4 border border-slate-800 text-left">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs">
-                          FS
-                        </div>
+                      <div className="flex items-center gap-2.5">
+                        <img
+                          src="/fes-logo.png"
+                          alt="Fast Engineering Solutions"
+                          className="w-9 h-9 rounded-full bg-white p-0.5 object-contain shadow-sm"
+                        />
                         <div>
                           <div className="font-bold text-xs text-white">FAST SERVICES</div>
                           <div className="text-[9px] text-emerald-400">● 24/7 Dispatch Ready</div>

@@ -95,11 +95,12 @@ export const InstallModal: React.FC<InstallModalProps> = ({
 
         {/* Header with App Logo & Badges */}
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-xl shadow-blue-600/30 flex-shrink-0 flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex flex-col items-center justify-center p-1">
-              <span className="text-blue-500 font-black text-sm tracking-tighter">FAST</span>
-              <span className="text-[8px] font-bold text-amber-400 tracking-wider">SERVICES</span>
-            </div>
+          <div className="w-16 h-16 rounded-2xl bg-white p-1 border border-slate-700 shadow-xl shadow-blue-600/30 flex-shrink-0 flex items-center justify-center overflow-hidden">
+            <img
+              src="/fes-logo.png"
+              alt="Fast Engineering Solutions"
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
 
           <div className="space-y-1 pr-6">
