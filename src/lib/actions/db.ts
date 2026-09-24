@@ -19,6 +19,8 @@ import {
   TaskStatus,
   UserStatus,
   UserRole,
+  CustomerReview,
+  ReviewStats,
 } from '@/types/database';
 import bcrypt from 'bcryptjs';
 
@@ -1545,6 +1547,330 @@ export async function getMonthlyOverview(month?: number, year?: number) {
     throw new Error('Unable to calculate monthly overview from database.');
   }
 }
+
+// ==============================================================================
+// 14. CUSTOMER REVIEWS & RATINGS
+// ==============================================================================
+export async function getCustomerReviews(options?: {
+  serviceId?: string;
+  featuredOnly?: boolean;
+  minRating?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<CustomerReview[]> {
+  try {
+    let rows: any[] = [];
+    const limit = options?.limit || 50;
+    const offset = options?.offset || 0;
+
+    if (options?.serviceId && options?.featuredOnly) {
+      rows = await sql`
+        SELECT id, customer_name, customer_role, company_name, service_id, service_name,
+               rating, review_title, comment, location, is_verified, is_featured, status,
+               created_at, updated_at
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED' AND service_id = ${options.serviceId} AND is_featured = TRUE
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    } else if (options?.serviceId) {
+      rows = await sql`
+        SELECT id, customer_name, customer_role, company_name, service_id, service_name,
+               rating, review_title, comment, location, is_verified, is_featured, status,
+               created_at, updated_at
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED' AND service_id = ${options.serviceId}
+        ORDER BY is_featured DESC, created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    } else if (options?.featuredOnly) {
+      rows = await sql`
+        SELECT id, customer_name, customer_role, company_name, service_id, service_name,
+               rating, review_title, comment, location, is_verified, is_featured, status,
+               created_at, updated_at
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED' AND is_featured = TRUE
+        ORDER BY created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    } else {
+      rows = await sql`
+        SELECT id, customer_name, customer_role, company_name, service_id, service_name,
+               rating, review_title, comment, location, is_verified, is_featured, status,
+               created_at, updated_at
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED'
+        ORDER BY is_featured DESC, created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `;
+    }
+
+    return rows.map((r: any) => ({
+      id: r.id,
+      customer_name: r.customer_name,
+      customer_role: r.customer_role || undefined,
+      company_name: r.company_name || undefined,
+      service_id: r.service_id || undefined,
+      service_name: r.service_name,
+      rating: Number(r.rating) || 5,
+      review_title: r.review_title,
+      comment: r.comment,
+      location: r.location || 'Lahore, Pakistan',
+      is_verified: Boolean(r.is_verified),
+      is_featured: Boolean(r.is_featured),
+      status: r.status,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    }));
+  } catch (e) {
+    console.error('[Neon getCustomerReviews Error]', e);
+    return [];
+  }
+}
+
+export async function getReviewStats(serviceId?: string): Promise<ReviewStats> {
+  try {
+    let rows: any[] = [];
+    if (serviceId) {
+      rows = await sql`
+        SELECT rating, is_verified
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED' AND service_id = ${serviceId}
+      `;
+    } else {
+      rows = await sql`
+        SELECT rating, is_verified
+        FROM public.customer_reviews
+        WHERE status = 'APPROVED'
+      `;
+    }
+
+    if (rows.length === 0) {
+      return {
+        averageRating: 5.0,
+        totalReviews: 0,
+        ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        recommendationPercentage: 100,
+        verifiedPercentage: 100,
+      };
+    }
+
+    const counts: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let sum = 0;
+    let verifiedCount = 0;
+    let satisfiedCount = 0;
+
+    rows.forEach((r: any) => {
+      const rating = Math.min(5, Math.max(1, Number(r.rating) || 5));
+      counts[rating] = (counts[rating] || 0) + 1;
+      sum += rating;
+      if (r.is_verified) verifiedCount++;
+      if (rating >= 4) satisfiedCount++;
+    });
+
+    const total = rows.length;
+    const avg = Number((sum / total).toFixed(1));
+    const recPct = Math.round((satisfiedCount / total) * 100);
+    const verPct = Math.round((verifiedCount / total) * 100);
+
+    return {
+      averageRating: avg,
+      totalReviews: total,
+      ratingCounts: {
+        5: counts[5] || 0,
+        4: counts[4] || 0,
+        3: counts[3] || 0,
+        2: counts[2] || 0,
+        1: counts[1] || 0,
+      },
+      recommendationPercentage: recPct,
+      verifiedPercentage: verPct,
+    };
+  } catch (e) {
+    console.error('[Neon getReviewStats Error]', e);
+    return {
+      averageRating: 5.0,
+      totalReviews: 0,
+      ratingCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+      recommendationPercentage: 100,
+      verifiedPercentage: 100,
+    };
+  }
+}
+
+export async function addCustomerReview(data: {
+  customer_name: string;
+  customer_role?: string;
+  company_name?: string;
+  service_id?: string;
+  service_name: string;
+  rating: number;
+  review_title: string;
+  comment: string;
+  location?: string;
+}): Promise<CustomerReview> {
+  try {
+    const rating = Math.min(5, Math.max(1, Number(data.rating) || 5));
+    const customer_name = data.customer_name.trim();
+    const service_name = data.service_name.trim();
+    const review_title = data.review_title.trim();
+    const comment = data.comment.trim();
+    const location = data.location?.trim() || 'Lahore, Pakistan';
+
+    if (!customer_name || !service_name || !review_title || !comment) {
+      throw new Error('Please fill all required review fields (Name, Service, Title, Comment).');
+    }
+
+    const rows = await sql`
+      INSERT INTO public.customer_reviews (
+        customer_name, customer_role, company_name, service_id, service_name,
+        rating, review_title, comment, location, is_verified, is_featured, status
+      ) VALUES (
+        ${customer_name},
+        ${data.customer_role?.trim() || null},
+        ${data.company_name?.trim() || null},
+        ${data.service_id || null},
+        ${service_name},
+        ${rating},
+        ${review_title},
+        ${comment},
+        ${location},
+        TRUE,
+        TRUE,
+        'APPROVED'
+      )
+      RETURNING *
+    `;
+
+    const r = rows[0] as any;
+    const newReview: CustomerReview = {
+      id: r.id,
+      customer_name: r.customer_name,
+      customer_role: r.customer_role || undefined,
+      company_name: r.company_name || undefined,
+      service_id: r.service_id || undefined,
+      service_name: r.service_name,
+      rating: Number(r.rating) || 5,
+      review_title: r.review_title,
+      comment: r.comment,
+      location: r.location || 'Lahore, Pakistan',
+      is_verified: Boolean(r.is_verified),
+      is_featured: Boolean(r.is_featured),
+      status: r.status,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    };
+
+    await addAuditLog(
+      'CREATE_REVIEW',
+      'CUSTOMER_REVIEW',
+      newReview.id,
+      {
+        customer_name: newReview.customer_name,
+        service_name: newReview.service_name,
+        rating: newReview.rating,
+      },
+      newReview.customer_name
+    );
+
+    return newReview;
+  } catch (e: any) {
+    console.error('[Neon addCustomerReview Error]', e);
+    throw new Error(e.message || 'Unable to submit review.');
+  }
+}
+
+export async function getAllCustomerReviewsAdmin(): Promise<CustomerReview[]> {
+  try {
+    const rows = await sql`
+      SELECT id, customer_name, customer_role, company_name, service_id, service_name,
+             rating, review_title, comment, location, is_verified, is_featured, status,
+             created_at, updated_at
+      FROM public.customer_reviews
+      ORDER BY created_at DESC
+    `;
+
+    return rows.map((r: any) => ({
+      id: r.id,
+      customer_name: r.customer_name,
+      customer_role: r.customer_role || undefined,
+      company_name: r.company_name || undefined,
+      service_id: r.service_id || undefined,
+      service_name: r.service_name,
+      rating: Number(r.rating) || 5,
+      review_title: r.review_title,
+      comment: r.comment,
+      location: r.location || 'Lahore, Pakistan',
+      is_verified: Boolean(r.is_verified),
+      is_featured: Boolean(r.is_featured),
+      status: r.status,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    }));
+  } catch (e) {
+    console.error('[Neon getAllCustomerReviewsAdmin Error]', e);
+    return [];
+  }
+}
+
+export async function updateCustomerReview(
+  id: string,
+  updates: {
+    status?: 'APPROVED' | 'PENDING' | 'REJECTED';
+    is_featured?: boolean;
+    is_verified?: boolean;
+  }
+): Promise<void> {
+  try {
+    if (updates.status !== undefined && updates.is_featured !== undefined && updates.is_verified !== undefined) {
+      await sql`
+        UPDATE public.customer_reviews
+        SET status = ${updates.status},
+            is_featured = ${updates.is_featured},
+            is_verified = ${updates.is_verified},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+    } else if (updates.status !== undefined) {
+      await sql`
+        UPDATE public.customer_reviews
+        SET status = ${updates.status},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+    } else if (updates.is_featured !== undefined) {
+      await sql`
+        UPDATE public.customer_reviews
+        SET is_featured = ${updates.is_featured},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+    } else if (updates.is_verified !== undefined) {
+      await sql`
+        UPDATE public.customer_reviews
+        SET is_verified = ${updates.is_verified},
+            updated_at = NOW()
+        WHERE id = ${id}
+      `;
+    }
+
+    await addAuditLog('UPDATE_REVIEW', 'CUSTOMER_REVIEW', id, updates, 'Admin');
+  } catch (e) {
+    console.error('[Neon updateCustomerReview Error]', e);
+    throw new Error('Unable to update review status.');
+  }
+}
+
+export async function deleteCustomerReview(id: string): Promise<void> {
+  try {
+    await sql`DELETE FROM public.customer_reviews WHERE id = ${id}`;
+    await addAuditLog('DELETE_REVIEW', 'CUSTOMER_REVIEW', id, {}, 'Admin');
+  } catch (e) {
+    console.error('[Neon deleteCustomerReview Error]', e);
+    throw new Error('Unable to delete customer review.');
+  }
+}
+
 
 
 

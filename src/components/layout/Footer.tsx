@@ -165,6 +165,12 @@ export const Footer: React.FC = () => {
               </Link>
             </li>
             <li>
+              <Link href="/reviews" className="text-slate-300 hover:text-blue-400 font-semibold transition-colors flex items-center gap-1.5">
+                <span>Customer Reviews & Ratings</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">⭐ 4.9</span>
+              </Link>
+            </li>
+            <li>
               <Link href="/request" className="text-slate-400 hover:text-white transition-colors">
                 Book a Service Request
               </Link>

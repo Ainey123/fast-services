@@ -22,6 +22,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Star,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Employees', href: '/admin/employees', icon: Briefcase },
     { name: 'Projects', href: '/admin/projects', icon: Layers },
     { name: 'Who Is Working On What', href: '/admin/work', icon: ListTodo },
+    { name: 'Customer Reviews & Ratings', href: '/admin/reviews', icon: Star },
     { name: 'Service Requests', href: '/admin/requests', icon: Wrench },
     { name: 'Services Catalog', href: '/admin/services', icon: Wrench },
     { name: 'Products & Inventory', href: '/admin/products', icon: Package },

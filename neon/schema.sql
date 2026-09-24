@@ -1,4 +1,4 @@
-﻿-- ==============================================================================
+-- ==============================================================================
 -- FAST SERVICES / FAST ENGINEERING SOLUTIONS
 -- PRODUCTION NEON POSTGRESQL ENTERPRISE SCHEMA
 -- ==============================================================================
@@ -262,6 +262,27 @@ CREATE TABLE IF NOT EXISTS public.company_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ------------------------------------------------------------------------------
+-- 15. CUSTOMER REVIEWS & RATINGS
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.customer_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    customer_name TEXT NOT NULL,
+    customer_role TEXT,
+    company_name TEXT,
+    service_id UUID REFERENCES public.services(id) ON DELETE SET NULL,
+    service_name TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_title TEXT NOT NULL,
+    comment TEXT NOT NULL,
+    location TEXT DEFAULT 'Lahore, Pakistan',
+    is_verified BOOLEAN DEFAULT TRUE,
+    is_featured BOOLEAN DEFAULT TRUE,
+    status TEXT NOT NULL CHECK (status IN ('APPROVED', 'PENDING', 'REJECTED')) DEFAULT 'APPROVED',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Indexes for optimal lookup performance
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_services_slug ON public.services(slug);
@@ -271,6 +292,10 @@ CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON public.tasks(project_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_employee_id ON public.tasks(assigned_employee_id);
 CREATE INDEX IF NOT EXISTS idx_project_products_project_id ON public.project_products(project_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_customer_reviews_service_id ON public.customer_reviews(service_id);
+CREATE INDEX IF NOT EXISTS idx_customer_reviews_status ON public.customer_reviews(status);
+CREATE INDEX IF NOT EXISTS idx_customer_reviews_rating ON public.customer_reviews(rating DESC);
+CREATE INDEX IF NOT EXISTS idx_customer_reviews_created_at ON public.customer_reviews(created_at DESC);
 
 -- ------------------------------------------------------------------------------
 -- INITIAL OFFICIAL DATASET SEED

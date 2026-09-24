@@ -229,3 +229,38 @@ export interface CompanySettings {
   logo_url?: string;
   updated_at: string;
 }
+
+export type ReviewStatus = 'APPROVED' | 'PENDING' | 'REJECTED';
+
+export interface CustomerReview {
+  id: string;
+  customer_name: string;
+  customer_role?: string;
+  company_name?: string;
+  service_id?: string;
+  service_name: string;
+  rating: number; // 1 to 5
+  review_title: string;
+  comment: string;
+  location?: string;
+  is_verified: boolean;
+  is_featured: boolean;
+  status: ReviewStatus;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  ratingCounts: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
+  recommendationPercentage: number;
+  verifiedPercentage: number;
+}
+

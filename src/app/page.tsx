@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
+import { ReviewsHomeSection } from '@/components/reviews/ReviewsHomeSection';
 import { getServices, getCompanySettings } from '@/lib/actions/db';
 import { Service, CompanySettings } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
@@ -508,6 +509,11 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ================================================================= */}
+        {/* 5.5 CUSTOMER REVIEWS & RATINGS */}
+        {/* ================================================================= */}
+        <ReviewsHomeSection />
 
         {/* ================================================================= */}
         {/* 6. CONTACT & LOCATION SECTION */}

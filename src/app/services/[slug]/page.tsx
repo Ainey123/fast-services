@@ -6,9 +6,12 @@ import { useParams, notFound } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileQuickBar } from '@/components/layout/MobileQuickBar';
-import { getServiceBySlug, getCompanySettings } from '@/lib/actions/db';
-import { Service, CompanySettings } from '@/types/database';
+import { getServiceBySlug, getCompanySettings, getCustomerReviews, getReviewStats } from '@/lib/actions/db';
+import { Service, CompanySettings, CustomerReview, ReviewStats } from '@/types/database';
 import { formatCurrency } from '@/lib/utils';
+import { StarRating } from '@/components/reviews/StarRating';
+import { ReviewCard } from '@/components/reviews/ReviewCard';
+import { ReviewFormModal } from '@/components/reviews/ReviewFormModal';
 import {
   Phone,
   MessageSquare,
@@ -20,6 +23,8 @@ import {
   Wrench,
   Sparkles,
   Calendar,
+  Star,
+  Edit3,
 } from 'lucide-react';
 
 export default function ServiceDetailPage() {
@@ -27,7 +32,10 @@ export default function ServiceDetailPage() {
   const slug = params?.slug as string;
   const [service, setService] = useState<Service | null>(null);
   const [settings, setSettings] = useState<CompanySettings | null>(null);
+  const [reviews, setReviews] = useState<CustomerReview[]>([]);
+  const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -39,6 +47,15 @@ export default function ServiceDetailPage() {
         ]);
         setService(srv);
         setSettings(setts);
+
+        if (srv) {
+          const [revs, st] = await Promise.all([
+            getCustomerReviews({ serviceId: srv.id }).catch(() => []),
+            getReviewStats(srv.id).catch(() => null),
+          ]);
+          setReviews(revs);
+          setStats(st);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -107,11 +124,21 @@ export default function ServiceDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             {/* Left 2 Columns: Main Details */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Title & Category */}
+              {/* Title & Category & Rating */}
               <div>
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase tracking-wider mb-2">
-                  {service.category}
-                </span>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase tracking-wider">
+                    {service.category}
+                  </span>
+                  {stats && stats.totalReviews > 0 && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+                      <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                      <span>{stats.averageRating.toFixed(1)} / 5.0</span>
+                      <span className="text-amber-600 font-normal">({stats.totalReviews} reviews)</span>
+                    </div>
+                  )}
+                </div>
+
                 <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
                   {service.name}
                 </h1>
@@ -159,6 +186,48 @@ export default function ServiceDetailPage() {
                       </div>
                     ))}
                 </div>
+              </div>
+
+              {/* Customer Reviews for this Specific Service */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                  <div>
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                      Client Feedback
+                    </span>
+                    <h3 className="text-xl font-bold text-slate-900 mt-0.5 flex items-center gap-2">
+                      <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                      <span>Customer Reviews & Ratings ({reviews.length})</span>
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all self-start sm:self-auto"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Rate This Service</span>
+                  </button>
+                </div>
+
+                {reviews.length === 0 ? (
+                  <div className="py-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-6">
+                    <p className="text-slate-600 font-semibold text-sm">No client reviews submitted for this service yet.</p>
+                    <p className="text-slate-400 text-xs mt-1">Be the first to share your experience with this service.</p>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold"
+                    >
+                      Write a Review
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((rev) => (
+                      <ReviewCard key={rev.id} review={rev} compact />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -241,6 +310,25 @@ export default function ServiceDetailPage() {
 
       <Footer />
       <MobileQuickBar />
+
+      {/* Review Modal for this service */}
+      {service && (
+        <ReviewFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          defaultServiceId={service.id}
+          defaultServiceName={service.name}
+          onReviewSubmitted={(newReview) => {
+            setReviews((prev) => [newReview, ...prev]);
+            if (stats) {
+              setStats({
+                ...stats,
+                totalReviews: stats.totalReviews + 1,
+              });
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
